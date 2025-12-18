@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="12dp"
+    card_view:cardCornerRadius="16dp"
+    card_view:cardUseCompatPadding="true"
+    card_view:cardElevation="6dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <!-- ✅ КАРТИНКА ПАЛИТРЫ (если есть) -->
+        <ImageView
+            android:id="@+id/ivPaletteImage"
+            android:layout_width="match_parent"
+            android:layout_height="170dp"
+            android:layout_marginBottom="10dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+
+        <!-- Шапка: ник и ⋮ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvAuthorName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="User Name"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnMore"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@android:color/transparent"
+                android:padding="4dp"
+                android:src="@drawable/ic_more_vert"
+                android:contentDescription="@string/more_options" />
+        </LinearLayout>
+
+        <!-- Описание -->
+        <TextView
+            android:id="@+id/tvDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Описание палитры..."
+            android:textSize="14sp"
+            android:visibility="gone" />
+
+        <!-- Теги -->
+        <LinearLayout
+            android:id="@+id/tagsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp" />
+
+        <!-- Блок палитры -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/paletteContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <!-- Лайк / Дизлайк -->
+        <LinearLayout
+            android:id="@+id/bottomActions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="start|center_vertical"
+            android:orientation="horizontal">
+
+            <!-- ЛАЙК -->
+            <LinearLayout
+                android:id="@+id/likeContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <ImageButton
+                    android:id="@+id/btnLike"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:padding="4dp"
+                    android:background="@android:color/transparent"
+                    android:src="@drawable/ic_like"
+                    android:tint="?attr/colorPrimary"
+                    android:contentDescription="@string/like" />
+
+                <TextView
+                    android:id="@+id/tvLikesCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="0"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- ДИЗЛАЙК -->
+            <LinearLayout
+                android:id="@+id/dislikeContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:layout_marginStart="16dp">
+
+                <ImageButton
+                    android:id="@+id/btnDislike"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:padding="4dp"
+                    android:background="@android:color/transparent"
+                    android:src="@drawable/ic_dislike"
+                    android:tint="?attr/colorOnSurfaceVariant"
+                    android:contentDescription="@string/dislike" />
+
+                <TextView
+                    android:id="@+id/tvDislikesCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="0"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvPublishDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text=""
+            android:textSize="12sp"
+            android:textColor="#9E9E9E"
+            android:fontFamily="sans-serif"
+            android:layout_gravity="end"/>
+
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

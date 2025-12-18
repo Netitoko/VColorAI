@@ -1,13 +1,265 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootProfile"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center">
+    android:orientation="vertical"
+    android:background="?android:colorBackground"
+    tools:context=".ui.ProfileFragment">
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
+    <!-- ================= ВЕРХ: профиль ================= -->
+    <LinearLayout
+        android:id="@+id/topProfileContainer"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Профиль"
-        android:textSize="20sp" />
-</FrameLayout>
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingStart="24dp"
+        android:paddingTop="24dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="12dp">
+
+        <ImageView
+            android:id="@+id/ivAvatar"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_marginBottom="12dp"
+            android:scaleType="centerCrop"
+            android:src="@mipmap/ic_launcher_round" />
+
+        <TextView
+            android:id="@+id/tvUsername"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Имя пользователя"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvEmail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Email пользователя"
+            android:textSize="13sp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Строка: Подписчики | Подписки | Лайки -->
+        <LinearLayout
+            android:id="@+id/statsLabelsRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="2dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvFollowersLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Подписчики"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvFollowingLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Подписки"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvLikesLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Лайки"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Цифры: 000 | 000 | 000 -->
+        <LinearLayout
+            android:id="@+id/statsValuesRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvFollowersCount"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="0"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvFollowingCount"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="0"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvLikesCount"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="0"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Кнопки -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="8dp">
+
+            <Button
+                android:id="@+id/btnEditProfile"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="40dp"
+                android:text="Изменить"
+                android:textSize="12sp"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/btnShareProfile"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="40dp"
+                android:text="Поделиться"
+                android:textSize="12sp"
+                android:layout_marginEnd="8dp" />
+
+            <ImageButton
+                android:id="@+id/btnSettings"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_preferences"
+                android:contentDescription="Настройки" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ================= НИЗ: табы + контент ================= -->
+    <LinearLayout
+        android:id="@+id/bottomProfileContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <!-- Табы -->
+        <LinearLayout
+            android:id="@+id/tabsRow"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvTabNotifications"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Уведомления"
+                android:textColor="@android:color/white"
+                android:background="@android:color/darker_gray"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvTabMyPalettes"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:layout_marginStart="4dp"
+                android:gravity="center"
+                android:text="Палитры"
+                android:textColor="@android:color/white"
+                android:background="@android:color/darker_gray"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvTabLikes"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:layout_marginStart="4dp"
+                android:gravity="center"
+                android:text="Лайки"
+                android:textColor="@android:color/white"
+                android:background="@android:color/darker_gray"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Контент вкладок -->
+        <FrameLayout
+            android:id="@+id/tabContentContainer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvNotifications"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvTabNotificationsEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Уведомлений пока нет"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvMyPublicPalettes"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvMyPublicPalettesEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Опубликованных палитр пока нет"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvTabLikesStub"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Здесь будут палитры, которые вы лайкнули"
+                android:textSize="14sp"
+                android:visibility="gone" />
+        </FrameLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

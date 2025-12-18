@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="80dp"
+    android:viewportWidth="120"
+    android:viewportHeight="80">
+
+    <!-- Фон-контейнер -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M8,0h104a8,8 0 0 1 8,8v64a8,8 0 0 1 -8,8h-104a8,8 0 0 1 -8,-8v-64a8,8 0 0 1 8,-8z" />
+
+    <!-- Гора -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M20,60l25,-30 18,22 15,-18 22,26z" />
+
+    <!-- Солнце -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M78,22a6,6 0 1 1 -12,0a6,6 0 1 1 12,0z" />
+
+</vector>

@@ -1,13 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:background="@color/white">
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+
+        <!-- Заголовок -->
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Регистрация"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:gravity="center"
+            android:layout_marginBottom="24dp" />
 
         <!-- Имя пользователя -->
         <EditText
@@ -15,16 +29,54 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Имя пользователя"
-            android:inputType="textPersonName"/>
+            android:inputType="textPersonName"
+            android:layout_marginBottom="12dp" />
 
-        <!-- Email -->
-        <EditText
-            android:id="@+id/etEmail"
+        <!-- Email + кнопка подтверждения -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Email"
-            android:inputType="textEmailAddress"
-            android:layout_marginTop="12dp"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <EditText
+                android:id="@+id/etEmail"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="Email"
+                android:inputType="textEmailAddress" />
+
+            <Button
+                android:id="@+id/btnSendCode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Подтвердить"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <!-- Подсказка о письме -->
+        <TextView
+            android:id="@+id/tvEmailVerificationHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Мы отправили письмо с кодом на указанный адрес"
+            android:textColor="#666666"
+            android:textSize="14sp"
+            android:visibility="gone"
+            android:layout_marginBottom="8dp"
+            android:gravity="center_horizontal" />
+
+        <!-- Поле для ввода кода -->
+        <EditText
+            android:id="@+id/etVerifyCode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Введите код из письма"
+            android:inputType="number"
+            android:visibility="gone"
+            android:layout_marginBottom="12dp" />
 
         <!-- Пароль -->
         <EditText
@@ -33,7 +85,48 @@
             android:layout_height="wrap_content"
             android:hint="Пароль"
             android:inputType="textPassword"
-            android:layout_marginTop="12dp"/>
+            android:layout_marginBottom="6dp" />
+
+        <!-- Требования к паролю -->
+        <LinearLayout
+            android:id="@+id/passwordRequirements"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/tvReqLength"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• Минимум 6 символов"
+                android:textColor="#888888"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvReqUppercase"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• Хотя бы одна заглавная буква"
+                android:textColor="#888888"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvReqNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• Хотя бы одна цифра"
+                android:textColor="#888888"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvReqSpecial"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• Хотя бы один спецсимвол"
+                android:textColor="#888888"
+                android:textSize="13sp" />
+        </LinearLayout>
 
         <!-- Подтверждение пароля -->
         <EditText
@@ -42,7 +135,7 @@
             android:layout_height="wrap_content"
             android:hint="Подтверждение пароля"
             android:inputType="textPassword"
-            android:layout_marginTop="12dp"/>
+            android:layout_marginBottom="12dp" />
 
         <!-- Телефон (опционально) -->
         <EditText
@@ -51,7 +144,7 @@
             android:layout_height="wrap_content"
             android:hint="Номер телефона (опционально)"
             android:inputType="phone"
-            android:layout_marginTop="12dp"/>
+            android:layout_marginBottom="16dp" />
 
         <!-- Кнопка регистрации -->
         <Button
@@ -59,7 +152,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Зарегистрироваться"
-            android:layout_marginTop="24dp"/>
+            android:layout_marginBottom="16dp" />
 
         <!-- Переход на экран входа -->
         <TextView
@@ -68,6 +161,7 @@
             android:layout_height="wrap_content"
             android:text="Уже есть аккаунт? Войти"
             android:textColor="@color/purple_500"
-            android:layout_marginTop="16dp"/>
+            android:textSize="15sp"
+            android:layout_gravity="center_horizontal" />
     </LinearLayout>
 </ScrollView>

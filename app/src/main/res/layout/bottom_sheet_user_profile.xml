@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootUserProfileSheet"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="?android:colorBackground"
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp">
+
+    <!-- ================= HEADER ================= -->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="12dp">
+
+        <!-- Аватар -->
+        <ImageView
+            android:id="@+id/ivAvatar"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_marginBottom="12dp"
+            android:scaleType="centerCrop"
+            android:src="@mipmap/ic_launcher_round" />
+
+        <!-- Ник -->
+        <TextView
+            android:id="@+id/tvUsername"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="User"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Кнопка подписки -->
+        <Button
+            android:id="@+id/btnSubscribe"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:text="Подписаться"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- ================= DIVIDER ================= -->
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="#33000000" />
+
+    <!-- ================= PALLETTES ================= -->
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Палитры пользователя"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:paddingStart="16dp"
+        android:paddingBottom="8dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvUserPalettes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:paddingBottom="24dp" />
+
+    <!-- Пусто -->
+    <TextView
+        android:id="@+id/tvEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="У пользователя пока нет опубликованных палитр"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:padding="24dp"
+        android:visibility="gone" />
+
+</LinearLayout>

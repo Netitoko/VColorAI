@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootNotification"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:layout_marginBottom="8dp"
+    android:background="?attr/selectableItemBackground">
+
+    <!-- Заголовок -->
+    <TextView
+        android:id="@+id/tvNotifTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Заголовок уведомления"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="?android:textColorPrimary"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Текст уведомления -->
+    <TextView
+        android:id="@+id/tvNotifMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Текст уведомления"
+        android:textSize="13sp"
+        android:textColor="?android:textColorSecondary"
+        android:layout_marginBottom="6dp" />
+
+    <!-- Время -->
+    <TextView
+        android:id="@+id/tvNotifTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="12.12 18:40"
+        android:textSize="11sp"
+        android:textColor="?android:textColorSecondary" />
+
+</LinearLayout>

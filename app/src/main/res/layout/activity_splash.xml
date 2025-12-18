@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".SplashActivity">
+
+    <!-- Логотип приложения -->
+    <ImageView
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:src="@mipmap/ic_launcher_round"
+        android:contentDescription="App Logo" />
+
+    <!-- Название -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="VColorAI"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:layout_marginTop="16dp" />
+
+    <!-- Подпись -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Загрузка..."
+        android:textSize="16sp"
+        android:layout_marginTop="8dp" />
+</LinearLayout>

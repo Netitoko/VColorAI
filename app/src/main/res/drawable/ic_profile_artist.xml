@@ -1,0 +1,48 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Кисточка — ворс (увеличен) -->
+    <path
+        android:fillColor="?attr/colorPrimary"
+        android:pathData="
+            M8.5,2
+            c1.2,1.2 1.6,2.6 1.6,4.2
+            s-0.4,3 -1.6,4.2
+            c-1.2,-1.2 -1.6,-2.6 -1.6,-4.2
+            s0.4,-3 1.6,-4.2z" />
+
+    <!-- Кисточка — ручка (больше, но всё ещё тонкая) -->
+    <path
+        android:fillColor="?attr/colorOnSurface"
+        android:pathData="
+            M8.5,22
+            L7.4,16.5
+            C7.2,15.5 7.2,14.2 7.4,13.2
+            L7.9,8
+            C8,7.6 8.3,7.3 8.5,7.3
+            C8.7,7.3 9,7.6 9.1,8
+            L9.6,13.2
+            C9.8,14.2 9.8,15.5 9.6,16.5
+            Z" />
+
+    <!-- Человек — голова (увеличена) -->
+    <path
+        android:fillColor="?attr/colorOnSurface"
+        android:pathData="M15,6a2.6,2.6 0 1,1 0,5.2 2.6,2.6 0 1,1 0,-5.2z" />
+
+    <!-- Человек — тело (увеличено и выровнено по высоте кисти) -->
+    <path
+        android:fillColor="?attr/colorOnSurface"
+        android:pathData="
+            M12,13
+            c0.9,-1.4 2.4,-2.1 3.5,-2.1s2.6,0.7 3.5,2.1
+            c0.9,1.4 1.3,2.7 1.3,4
+            v5
+            h-9.6
+            v-5
+            c0,-1.3 0.4,-2.6 1.3,-4z" />
+
+</vector>

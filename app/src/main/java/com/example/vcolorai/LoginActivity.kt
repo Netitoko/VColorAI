@@ -1,10 +1,12 @@
 package com.example.vcolorai
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.vcolorai.databinding.ActivityLoginBinding
+import com.example.vcolorai.ui.auth.ForgotPasswordDialogFragment
 import com.google.firebase.auth.FirebaseAuth
 
 class LoginActivity : AppCompatActivity() {
@@ -17,10 +19,9 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Инициализация FirebaseAuth
         auth = FirebaseAuth.getInstance()
 
-        // Кнопка Войти
+        // Вход
         binding.btnLogin.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString().trim()
@@ -33,31 +34,27 @@ class LoginActivity : AppCompatActivity() {
             loginUser(email, password)
         }
 
-        // Кнопка Забыли пароль
+        // 🔐 Забыли пароль? — теперь открывает наш диалог
         binding.tvForgotPassword.setOnClickListener {
-            val email = binding.etEmail.text.toString().trim()
-            if (email.isEmpty()) {
-                Toast.makeText(this, "Введите email для сброса пароля", Toast.LENGTH_SHORT).show()
-            } else {
-                auth.sendPasswordResetEmail(email).addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        Toast.makeText(this, "Письмо для сброса отправлено", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this, "Ошибка: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
+            ForgotPasswordDialogFragment()
+                .show(supportFragmentManager, "forgot_password")
         }
 
-        // Кнопка Продолжить без регистрации
+        // Гостевой вход
         binding.btnGuest.setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(Intent(this, GuestActivity::class.java))
             finish()
         }
 
-        // Переход на регистрацию
+        // Переход к регистрации
         binding.tvGoToRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
+        }
+
+        // Если пришёл email из ChooseAccountActivity — подставляем его
+        val selectedEmail = intent.getStringExtra("selectedEmail")
+        if (!selectedEmail.isNullOrEmpty()) {
+            binding.etEmail.setText(selectedEmail)
         }
     }
 
@@ -65,12 +62,30 @@ class LoginActivity : AppCompatActivity() {
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
+                    val user = auth.currentUser
                     Toast.makeText(this, "Успешный вход!", Toast.LENGTH_SHORT).show()
+
+                    // ✅ Сохраняем пользователя, если стоит галочка
+                    if (binding.cbRememberMe.isChecked && user != null) {
+                        saveUserLocally(user.uid, user.email ?: "")
+                    }
+
                     startActivity(Intent(this, MainActivity::class.java))
                     finish()
                 } else {
-                    Toast.makeText(this, "Ошибка: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        "Ошибка входа: ${task.exception?.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
+    }
+
+    private fun saveUserLocally(uid: String, email: String) {
+        val prefs = getSharedPreferences("local_users", Context.MODE_PRIVATE)
+        prefs.edit()
+            .putString(uid, email)
+            .apply()
     }
 }

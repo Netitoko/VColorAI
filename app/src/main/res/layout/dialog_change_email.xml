@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/etNewEmail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Новый email"
+        android:inputType="textEmailAddress" />
+
+    <Button
+        android:id="@+id/btnSendEmailCode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Отправить код" />
+
+    <EditText
+        android:id="@+id/etEmailCode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:hint="Код из письма"
+        android:inputType="number"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/btnConfirmEmailChange"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Подтвердить"
+        android:visibility="gone" />
+
+</LinearLayout>

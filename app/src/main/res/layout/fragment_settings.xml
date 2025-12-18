@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settingsRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:colorBackground">
+
+    <!-- Основной контент -->
+    <ScrollView
+        android:id="@+id/settingsScroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:overScrollMode="never"
+        android:padding="16dp"
+        android:paddingBottom="80dp">
+
+        <LinearLayout
+            android:id="@+id/settingsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Заголовок -->
+            <TextView
+                android:id="@+id/tvSettingsTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Настройки"
+                android:textStyle="bold"
+                android:textSize="22sp"
+                android:layout_marginBottom="20dp" />
+
+            <!-- АККАУНТ -->
+            <TextView
+                android:id="@+id/tvSectionAccount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Аккаунт"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:id="@+id/btnEditProfile"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="12dp"
+                android:background="?attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Изменить профиль" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnChangeEmail"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="12dp"
+                android:background="?attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Сменить email" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnChangePassword"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="12dp"
+                android:background="?attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Сменить пароль" />
+            </LinearLayout>
+
+            <!-- СТАТИСТИКА -->
+            <TextView
+                android:id="@+id/tvSectionStats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Статистика"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:id="@+id/btnMyStats"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="12dp"
+                android:background="?attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Моя активность" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnExportPdf"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="12dp"
+                android:background="?attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Экспорт в PDF" />
+            </LinearLayout>
+
+            <!-- ПОДДЕРЖКА -->
+            <TextView
+                android:id="@+id/tvSectionSupport"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Поддержка"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:id="@+id/btnRules"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="12dp"
+                android:background="?attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Правила публикаций" />
+            </LinearLayout>
+
+            <!-- УВЕДОМЛЕНИЯ -->
+
+            <!-- ОФОРМЛЕНИЕ -->
+            <TextView
+                android:id="@+id/tvSectionAppearance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Оформление"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:id="@+id/btnTheme"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="12dp"
+                android:background="?attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Тема приложения" />
+            </LinearLayout>
+
+            <!-- ОПАСНАЯ ЗОНА -->
+            <TextView
+                android:id="@+id/tvSectionDanger"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Аккаунт"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnLogout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Выйти из аккаунта" />
+
+            <Button
+                android:id="@+id/btnDeleteAccount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Удалить аккаунт"
+                android:backgroundTint="@android:color/holo_red_dark"
+                android:textColor="@android:color/white"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Кнопка закрытия -->
+    <ImageButton
+        android:id="@+id/btnCloseSettings"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_margin="12dp"
+        android:layout_gravity="top|end"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_close"
+        android:tint="?attr/colorOnSurface"
+        android:contentDescription="Закрыть настройки" />
+
+</FrameLayout>

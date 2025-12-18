@@ -6,8 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.example.vcolorai.databinding.FragmentHomeBinding
+import com.example.vcolorai.ui.common.BaseFragment
 
-class HomeFragment : Fragment() {
+class HomeFragment : BaseFragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 

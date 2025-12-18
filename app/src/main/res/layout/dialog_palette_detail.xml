@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <ImageButton
+            android:id="@+id/btnClose"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="end"
+            android:padding="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_close"
+            android:tint="?attr/colorOnSurface"
+            android:contentDescription="Закрыть"/>
+
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/ivPaletteImage"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:visibility="gone"/>
+
+            <ProgressBar
+                android:id="@+id/progressImageLoading"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center"
+                android:visibility="gone"/>
+        </FrameLayout>
+
+        <!-- Редактируемое название палитры -->
+        <EditText
+            android:id="@+id/etPaletteTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Text 1: Example"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:imeOptions="actionDone"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Полная палитра -->
+        <LinearLayout
+            android:id="@+id/fullPaletteContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <!-- Теги (чипы) -->
+        <TextView
+            android:id="@+id/tvTagsLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Теги"
+            android:textSize="14sp"
+            android:layout_marginTop="16dp"/>
+
+        <!-- Контейнер для чипов -->
+        <LinearLayout
+            android:id="@+id/tagsChipsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="6dp"
+            android:gravity="start"
+            android:baselineAligned="false" />
+
+        <!-- Поле ввода тега + плюсик -->
+        <LinearLayout
+            android:id="@+id/tagInputRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/etTagInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Добавить тег"
+                android:singleLine="true"
+                android:imeOptions="actionDone"/>
+
+            <ImageButton
+                android:id="@+id/btnAddTag"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Добавить тег"
+                android:src="@android:drawable/ic_input_add"/>
+        </LinearLayout>
+
+        <!-- Кнопки -->
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Сохранить"
+            android:layout_marginTop="16dp"/>
+
+        <Button
+            android:id="@+id/btnPublish"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Опубликовать"
+            android:layout_marginTop="8dp"/>
+    </LinearLayout>
+</ScrollView>

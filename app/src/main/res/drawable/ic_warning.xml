@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Треугольник -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="
+            M1,21h22L12,2 1,21z" />
+
+    <!-- Восклицательный знак: палка -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="
+            M11,16h2v2h-2z" />
+
+    <!-- Восклицательный знак: точка -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="
+            M11,10h2v5h-2z" />
+</vector>

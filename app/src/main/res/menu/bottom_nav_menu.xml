@@ -1,23 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/nav_home"
-        android:icon="@android:drawable/ic_menu_view"
-        android:title="Главная" />
+        android:id="@+id/nav_generation"
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="Генерация" />
 
     <item
-        android:id="@+id/nav_analyze"
-        android:icon="@android:drawable/ic_menu_camera"
-        android:title="Анализ" />
+        android:id="@+id/nav_feed"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="Лента" />
 
     <item
         android:id="@+id/nav_palettes"
-        android:icon="@android:drawable/ic_menu_gallery"
-        android:title="Палитры" />
+        android:icon="@drawable/ic_palette_artist"
+        android:title="Мои палитры" />
+
+    <item
+        android:id="@+id/nav_ideas_bot"
+        android:icon="@drawable/ic_robot_head"
+        android:title="Чат-бот" />
 
     <item
         android:id="@+id/nav_profile"
-        android:icon="@android:drawable/ic_menu_manage"
+        android:icon="@drawable/ic_profile_artist"
         android:title="Профиль" />
+
 </menu>

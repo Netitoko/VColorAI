@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("kotlin-kapt")
     id("com.google.gms.google-services")
 }
 
@@ -36,14 +37,16 @@ android {
         jvmTarget = "11"
     }
 
-    // ✅ Включаем View Binding
     buildFeatures {
         viewBinding = true
     }
+
+    packaging {
+        resources {
+            excludes += setOf("META-INF/NOTICE.md", "META-INF/LICENSE.md")
+        }
+    }
 }
-
-
-
 
 dependencies {
     implementation(libs.androidx.core.ktx)
@@ -56,12 +59,40 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-// Firebase BoM
+    // Firebase BoM
     implementation(platform(libs.firebase.bom))
 
-// Firebase компоненты
+    // Firebase компоненты (версии берутся из BoM)
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)
 
+    // OkHttp + логгер
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // Retrofit + GSON
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // JSON
+    implementation("org.json:json:20231013")
+
+    // Почта
+    implementation("com.sun.mail:android-mail:1.6.7")
+    implementation("com.sun.mail:android-activation:1.6.7")
+
+    // Palette
+    implementation("androidx.palette:palette-ktx:1.0.0")
+    implementation("androidx.palette:palette:1.0.0")
+
+    // Коррутины
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    // Glide
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    // kapt("com.github.bumptech.glide:compiler:4.16.0") // нужно только если используешь @GlideModule
+
+    // ✅ PhotoView (pinch-to-zoom) — Maven Central, без JitPack
+    implementation("io.getstream:photoview:1.0.3")
 }

@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:colorBackground">
+
+
+    <!-- 📸 Большое превью (верхняя половина экрана в фото/комбо-режиме) -->
+    <ImageView
+        android:id="@+id/ivPreview"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        android:adjustViewBounds="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/paletteContainer"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="12dp"
+        app:layout_constraintDimensionRatio="4:3"/>
+
+
+    <!-- 🔽 Прокручиваемый контейнер для текстового режима (как был) -->
+    <ScrollView
+        android:id="@+id/scrollPalette"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@id/ivPreview"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Контейнер, который занимает весь экран -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical">
+
+        <!-- Собственно контейнер палитр -->
+        <LinearLayout
+            android:id="@+id/paletteContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="8dp" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+
+
+
+    <!-- 🔁 Переключатель палитр (текстовый режим, как был) -->
+    <LinearLayout
+        android:id="@+id/paletteSwitcherContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/inputContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/scrollPalette">
+
+        <ImageButton
+            android:id="@+id/btnPrevPalette"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_arrow_left"
+            android:tint="?attr/colorOnSurface" />
+
+        <HorizontalScrollView
+            android:id="@+id/paletteScroll"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/paletteContainerTabs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <ImageButton
+            android:id="@+id/btnNextPalette"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_arrow_right"
+            android:tint="?attr/colorOnSurface" />
+    </LinearLayout>
+
+    <!-- 🎨 Горизонтальная палитра ДЛЯ ФОТО/КОМБО-РЕЖИМА -->
+    <HorizontalScrollView
+        android:id="@+id/imagePaletteScroll"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:scrollbars="none"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/ivPreview"
+        app:layout_constraintBottom_toTopOf="@id/inputContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:id="@+id/imagePaletteContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
+
+    <!-- 🌀 Надпись "Идёт генерация..." по центру -->
+    <TextView
+        android:id="@+id/tvGenerating"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Идёт генерация..."
+        android:textSize="16sp"
+        android:padding="8dp"
+        android:visibility="gone"
+        android:textColor="?attr/colorOnSurface"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/inputContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_bias="0.5"/>
+
+    <!-- 🔻 Нижняя панель ввода (теперь вертикальная: превью сверху, ввод снизу) -->
+    <LinearLayout
+        android:id="@+id/inputContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:background="?attr/colorSurface"
+        android:elevation="4dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <!-- Маленький превью-квадратик над полем ввода -->
+        <FrameLayout
+            android:id="@+id/previewChipContainer"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/ivPreviewChip"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop" />
+
+            <ImageButton
+                android:id="@+id/btnClearImage"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="end|top"
+                android:background="@android:color/transparent"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:tint="?attr/colorOnSurface"
+                android:contentDescription="Убрать изображение" />
+        </FrameLayout>
+
+        <!-- Основная строка: выбор фото + текст + отправка -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="4dp">
+
+            <ImageButton
+                android:id="@+id/btnTakePhoto"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_camera"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:tint="?attr/colorOnSurface"
+                android:contentDescription="Сделать фото" />
+
+
+            <ImageButton
+                android:id="@+id/btnPickImage"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_image"
+                android:tint="?attr/colorOnSurface"
+                android:contentDescription="Выбрать изображение" />
+
+            <EditText
+                android:id="@+id/etPrompt"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Введите описание..."
+                android:backgroundTint="?attr/colorOutline"
+                android:textColor="?attr/colorOnSurface"
+                android:textColorHint="?attr/colorOnSurfaceVariant"
+                android:padding="10dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp" />
+
+            <ImageButton
+                android:id="@+id/btnGenerate"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_send"
+                android:tint="?attr/colorPrimary"
+                android:contentDescription="Сгенерировать" />
+        </LinearLayout>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

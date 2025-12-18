@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <!-- Заголовок -->
+    <TextView
+        android:id="@+id/tvTitleBot"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="VColor AI — бот идей"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp" />
+
+    <!-- Подсказка текущего режима -->
+    <TextView
+        android:id="@+id/tvModeHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Выберите тип запроса, а затем опишите идею"
+        android:textSize="13sp"
+        android:layout_marginBottom="10dp" />
+
+    <!-- Чат (история переписки) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvChat"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:overScrollMode="never"
+        android:scrollbars="vertical" />
+
+    <!-- Режимы бота: скроллимые кнопки, побольше и повыше -->
+    <HorizontalScrollView
+        android:id="@+id/typeButtonsScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:overScrollMode="never"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/typeButtonsRow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnTypePrompt"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginEnd="8dp"
+                android:minWidth="90dp"
+                android:text="Промпт"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/btnTypeDescription"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginEnd="8dp"
+                android:minWidth="110dp"
+                android:text="Описание"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/btnTypePhoto"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginEnd="8dp"
+                android:minWidth="90dp"
+                android:text="Фото"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/btnTypeMix"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginEnd="8dp"
+                android:minWidth="110dp"
+                android:text="Смешать"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- Карточки EN / RU подсказок (сейчас не используются, но можно оставить) -->
+    <ScrollView
+        android:id="@+id/suggestionsScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fillViewport="false"
+        android:layout_marginTop="8dp">
+
+        <LinearLayout
+            android:id="@+id/suggestionsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+    <!-- Поле ввода + отправка -->
+    <LinearLayout
+        android:id="@+id/inputRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="10dp">
+
+        <EditText
+            android:id="@+id/etMessage"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:hint="Спросите что-нибудь..."
+            android:padding="10dp"
+            android:backgroundTint="?attr/colorPrimary"
+            android:textColor="?attr/colorOnSurface"
+            android:textColorHint="?attr/colorOnSurface" />
+
+        <!-- Кнопка отправки как во вкладке генерации (ic_send) -->
+        <ImageButton
+            android:id="@+id/btnSend"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_send"
+            android:tint="?attr/colorPrimary"
+            android:contentDescription="Отправить" />
+    </LinearLayout>
+
+</LinearLayout>

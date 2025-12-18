@@ -42,6 +42,14 @@
         android:text="Войти"
         android:layout_marginBottom="16dp"/>
 
+    <CheckBox
+        android:id="@+id/cbRememberMe"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Запомнить меня на этом устройстве"
+        android:layout_marginBottom="16dp" />
+
+
     <TextView
         android:id="@+id/tvForgotPassword"
         android:layout_width="wrap_content"
