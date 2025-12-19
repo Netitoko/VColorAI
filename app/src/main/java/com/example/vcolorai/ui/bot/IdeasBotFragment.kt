@@ -11,7 +11,6 @@ import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.vcolorai.databinding.FragmentIdeasBotBinding
@@ -93,7 +92,7 @@ class IdeasBotFragment : BaseFragment() {
         }
     }
 
-    // ============== Чат ==============
+    // Чат
 
     private fun setupChat() {
         chatAdapter = ChatAdapter(messages) { text ->
@@ -157,19 +156,13 @@ class IdeasBotFragment : BaseFragment() {
         scrollChatToBottom()
     }
 
-    // ============== UI и отправка ==============
+    // UI и отправка
 
     private fun setupUi() {
         binding.btnTypePrompt.setOnClickListener {
             currentType = RequestType.TEXT_PROMPT
             binding.tvModeHint.text =
                 "Режим: идеи текстовых промптов.\nОтвет: EN + RU в чате."
-        }
-
-        binding.btnTypeDescription.setOnClickListener {
-            currentType = RequestType.DESCRIPTION
-            binding.tvModeHint.text =
-                "Режим: описание палитры.\nОтвет: EN + RU в чате."
         }
 
         binding.btnTypePhoto.setOnClickListener {
@@ -186,6 +179,8 @@ class IdeasBotFragment : BaseFragment() {
 
         binding.btnSend.setOnClickListener { sendMessage() }
     }
+
+    // Отправка сообщения
 
     private fun sendMessage() {
         val type = currentType ?: run {
@@ -248,11 +243,10 @@ class IdeasBotFragment : BaseFragment() {
         }
     }
 
-    // ============== Построение промпта ==============
+    // Построение промпта
 
     private fun buildPrompt(type: RequestType, userText: String): String =
         when (type) {
-
             RequestType.TEXT_PROMPT -> """
                 Сгенерируй 3–5 промптов в формате:
 
@@ -283,7 +277,7 @@ class IdeasBotFragment : BaseFragment() {
             """.trimIndent()
         }
 
-    // ============== Вызов Yandex GPT ==============
+    // Вызов Yandex GPT
 
     private suspend fun callYandexGpt(prompt: String): String {
         val request = ChatCompletionRequest(
@@ -306,7 +300,7 @@ class IdeasBotFragment : BaseFragment() {
             ?: "Пустой ответ"
     }
 
-    // ============== Парсер пар EN/RU ==============
+    // Парсер EN / RU
 
     data class PromptPair(val en: String, val ru: String)
 
@@ -336,6 +330,7 @@ class IdeasBotFragment : BaseFragment() {
         return list
     }
 
+    // Копирование текста
     private fun copyToClipboard(text: String) {
         val clipboard =
             requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -348,7 +343,7 @@ class IdeasBotFragment : BaseFragment() {
     }
 }
 
-/* ---- API Models ---- */
+// API модели
 
 data class ChatCompletionRequest(
     val model: String,
@@ -372,6 +367,7 @@ data class ChatChoice(
     val message: ChatMessageApi
 )
 
+// Retrofit API
 interface YandexGptApi {
     @POST("chat/completions")
     suspend fun getChatCompletion(
