@@ -19,8 +19,8 @@ import retrofit2.http.POST
 object PaletteGenerator {
 
     // API ключи
-    private const val API_KEY = "AQVNxfonCHS5isAPbX3kZzGkyTiTnAcreDVgIF5g"
-    private const val FOLDER_ID = "b1glt4t38j53448m7b0n"
+    private const val API_KEY = ""
+    private const val FOLDER_ID = ""
 
     private val gson = Gson()
 
