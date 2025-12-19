@@ -54,10 +54,7 @@
 
     </ScrollView>
 
-
-
-
-    <!-- 🔁 Переключатель палитр (текстовый режим, как был) -->
+    <!-- Переключатель палитр (текстовый режим, как был) -->
     <LinearLayout
         android:id="@+id/paletteSwitcherContainer"
         android:layout_width="0dp"
@@ -101,7 +98,7 @@
             android:tint="?attr/colorOnSurface" />
     </LinearLayout>
 
-    <!-- 🎨 Горизонтальная палитра ДЛЯ ФОТО/КОМБО-РЕЖИМА -->
+    <!-- Горизонтальная палитра ДЛЯ ФОТО/КОМБО-РЕЖИМА -->
     <HorizontalScrollView
         android:id="@+id/imagePaletteScroll"
         android:layout_width="0dp"
@@ -121,7 +118,7 @@
             android:orientation="horizontal" />
     </HorizontalScrollView>
 
-    <!-- 🌀 Надпись "Идёт генерация..." по центру -->
+    <!-- Надпись "Идёт генерация..." по центру -->
     <TextView
         android:id="@+id/tvGenerating"
         android:layout_width="wrap_content"
@@ -137,7 +134,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintVertical_bias="0.5"/>
 
-    <!-- 🔻 Нижняя панель ввода (теперь вертикальная: превью сверху, ввод снизу) -->
+    <!-- Нижняя панель ввода (теперь вертикальная: превью сверху, ввод снизу) -->
     <LinearLayout
         android:id="@+id/inputContainer"
         android:layout_width="match_parent"

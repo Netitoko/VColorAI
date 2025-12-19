@@ -44,7 +44,7 @@
     <ListView
         android:id="@+id/listViewAccounts"
         android:layout_width="wrap_content"
-        android:layout_height="456dp"
+        android:layout_height="647dp"
         android:layout_weight="1"
         android:choiceMode="multipleChoice"
         android:dividerHeight="1dp" />

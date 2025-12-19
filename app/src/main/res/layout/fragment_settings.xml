@@ -197,15 +197,6 @@
                 android:layout_height="wrap_content"
                 android:text="Выйти из аккаунта" />
 
-            <Button
-                android:id="@+id/btnDeleteAccount"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Удалить аккаунт"
-                android:backgroundTint="@android:color/holo_red_dark"
-                android:textColor="@android:color/white"
-                android:layout_marginTop="8dp" />
-
         </LinearLayout>
     </ScrollView>
 

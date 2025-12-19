@@ -188,10 +188,6 @@ class SettingsFragment : BaseFragment() {
             requireActivity().finish()
         }
 
-        // Удаление аккаунта
-        binding.btnDeleteAccount.setOnClickListener {
-            showDeleteAccountDialog()
-        }
     }
 
     // -------------------------------------------------------------------------
