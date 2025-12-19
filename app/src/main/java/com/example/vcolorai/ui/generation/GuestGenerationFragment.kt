@@ -1,4 +1,4 @@
-package com.example.vcolorai
+package com.example.vcolorai.ui.generation
 
 import android.Manifest
 import android.animation.ObjectAnimator
@@ -30,11 +30,12 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import androidx.palette.graphics.Palette
+import com.example.vcolorai.ui.auth.LoginActivity
 import com.example.vcolorai.databinding.FragmentGuestGenerationBinding
 import com.example.vcolorai.generation.PaletteGenerator
 import com.example.vcolorai.ui.common.BaseFragment
 import com.example.vcolorai.ui.common.FullscreenImageDialog
-import com.example.vcolorai.ui.dialogs.LoadingDialog
+import com.example.vcolorai.ui.common.LoadingDialog
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import java.io.BufferedReader
@@ -56,7 +57,9 @@ class GuestGenerationFragment : BaseFragment() {
     private var selectedImageUri: Uri? = null
     private var cameraImageUri: Uri? = null
 
-    // -------------------- GALLERY --------------------
+    // -------------------------------------------------------------------------
+    // ВЫБОР ИЗОБРАЖЕНИЙ ИЗ ГАЛЕРЕИ
+    // -------------------------------------------------------------------------
 
     private val pickImageLauncher =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -73,7 +76,9 @@ class GuestGenerationFragment : BaseFragment() {
             }
         }
 
-    // -------------------- CAMERA --------------------
+    // -------------------------------------------------------------------------
+    // ДОСТУП К КАМЕРЕ И СЪЕМКА ФОТОГРАФИЙ
+    // -------------------------------------------------------------------------
 
     private val requestCameraPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -92,7 +97,9 @@ class GuestGenerationFragment : BaseFragment() {
             }
         }
 
-    // -------------------- LIFECYCLE --------------------
+    // -------------------------------------------------------------------------
+    // ЖИЗНЕННЫЙ ЦИКЛ ФРАГМЕНТА
+    // -------------------------------------------------------------------------
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -104,31 +111,31 @@ class GuestGenerationFragment : BaseFragment() {
         loadingDialog = LoadingDialog(requireContext())
         loadColorKeywords()
 
-        // ✅ кнопка "Войти" (в правом верхнем углу)
+        // Кнопка перехода к авторизации
         binding.btnLogin.visibility = View.VISIBLE
         binding.btnLogin.setOnClickListener {
             startActivity(Intent(requireContext(), LoginActivity::class.java))
-            requireActivity().finish() // чтобы не возвращаться назад в гостевой режим кнопкой Back
+            requireActivity().finish()
         }
 
-        // 📂 галерея
+        // Выбор изображения из галереи
         binding.btnPickImage.setOnClickListener {
             pickImageLauncher.launch(arrayOf("image/*"))
         }
 
-        // 📸 камера
+        // Съемка фотографии
         binding.btnTakePhoto.setOnClickListener {
             openCamera()
         }
 
-        // очистка выбранной картинки
+        // Очистка выбранного изображения
         binding.btnClearImage.setOnClickListener {
             selectedImageUri = null
             cameraImageUri = null
             binding.previewChipContainer.visibility = View.GONE
         }
 
-        // генерация
+        // Запуск генерации палитры
         binding.btnGenerate.setOnClickListener {
             generate()
         }
@@ -141,17 +148,28 @@ class GuestGenerationFragment : BaseFragment() {
         _binding = null
     }
 
-    // ✅ добавляем нижний inset ТОЛЬКО для inputContainer, чтобы он не залезал под жестовую панель
+    // -------------------------------------------------------------------------
+    // АДАПТАЦИЯ ПОД СИСТЕМНЫЕ ОТСТУПЫ (STATUS BAR И НАВИГАЦИОННАЯ ПАНЕЛЬ)
+    // -------------------------------------------------------------------------
+
     override fun applyInsets(root: View) {
-        val initialTop = root.paddingTop
+        // Сохраняем исходные отступы
+        val initialRootTop = root.paddingTop
+        val initialRootBottom = root.paddingBottom
         val initialInputBottom = binding.inputContainer.paddingBottom
 
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime()) // <-- ВАЖНО: обработка клавиатуры
             val navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
 
-            v.updatePadding(top = initialTop + statusBars.top)
+            // Общие отступы для корневого контейнера
+            v.updatePadding(
+                top = initialRootTop + statusBars.top,
+                bottom = initialRootBottom + max(ime.bottom, navBars.bottom) // <-- учитываем клавиатуру
+            )
 
+            // Дополнительные отступы для input контейнера
             binding.inputContainer.updatePadding(
                 bottom = initialInputBottom + navBars.bottom
             )
@@ -160,7 +178,9 @@ class GuestGenerationFragment : BaseFragment() {
         }
     }
 
-    // -------------------- CAMERA LOGIC --------------------
+    // -------------------------------------------------------------------------
+    // ЛОГИКА РАБОТЫ С КАМЕРОЙ
+    // -------------------------------------------------------------------------
 
     private fun openCamera() {
         val granted = ContextCompat.checkSelfPermission(
@@ -196,7 +216,9 @@ class GuestGenerationFragment : BaseFragment() {
         }
     }
 
-    // -------------------- GENERATION --------------------
+    // -------------------------------------------------------------------------
+    // ОСНОВНАЯ ЛОГИКА ГЕНЕРАЦИИ ПАЛИТРЫ
+    // -------------------------------------------------------------------------
 
     private fun generate() {
         val text = binding.etPrompt.text.toString().trim()
@@ -215,7 +237,7 @@ class GuestGenerationFragment : BaseFragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 when {
-                    // ---------- TEXT MODE ----------
+                    // ГЕНЕРАЦИЯ ПО ТЕКСТУ
                     !hasImage && hasText -> {
                         val promptNormalized = text.lowercase()
 
@@ -249,9 +271,8 @@ class GuestGenerationFragment : BaseFragment() {
                         binding.etPrompt.text?.clear()
                     }
 
-                    // ---------- IMAGE MODE ----------
+                    // ГЕНЕРАЦИЯ ПО ИЗОБРАЖЕНИЮ
                     hasImage && !hasText -> {
-                        // прячем чип, чтобы не путать
                         selectedImageUri = null
                         binding.previewChipContainer.visibility = View.GONE
 
@@ -264,7 +285,7 @@ class GuestGenerationFragment : BaseFragment() {
                         binding.etPrompt.text?.clear()
                     }
 
-                    // ---------- COMBINED MODE ----------
+                    // КОМБИНИРОВАННАЯ ГЕНЕРАЦИЯ
                     hasImage && hasText -> {
                         selectedImageUri = null
                         binding.previewChipContainer.visibility = View.GONE
@@ -285,14 +306,18 @@ class GuestGenerationFragment : BaseFragment() {
         }
     }
 
-    // --------- Тема (dark / light) ---------
+    // -------------------------------------------------------------------------
+    // ОПРЕДЕЛЕНИЕ ТЕМЫ ПРИЛОЖЕНИЯ
+    // -------------------------------------------------------------------------
 
     private fun isDarkTheme(): Boolean {
         val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
         return currentNightMode == Configuration.UI_MODE_NIGHT_YES
     }
 
-    // --------- Загрузка словаря ---------
+    // -------------------------------------------------------------------------
+    // ЗАГРУЗКА СЛОВАРЯ КЛЮЧЕВЫХ СЛОВ ДЛЯ ЦВЕТОВ
+    // -------------------------------------------------------------------------
 
     private fun loadColorKeywords() {
         try {
@@ -310,7 +335,9 @@ class GuestGenerationFragment : BaseFragment() {
         }
     }
 
-    // --------- Генерация палитры по тексту (offline) ---------
+    // -------------------------------------------------------------------------
+    // ОФФЛАЙН ГЕНЕРАЦИЯ ПАЛИТРЫ ПО ТЕКСТУ
+    // -------------------------------------------------------------------------
 
     private fun generateSmartPalette(text: String): List<String> {
         val words = text.split(" ", "-", "_")
@@ -335,6 +362,7 @@ class GuestGenerationFragment : BaseFragment() {
         return generateVariations(modified)
     }
 
+    // Применение модификаторов освещения к цвету
     private fun applyLightModifier(color: Int, mods: List<String>): Int {
         val hsv = FloatArray(3)
         Color.colorToHSV(color, hsv)
@@ -347,6 +375,7 @@ class GuestGenerationFragment : BaseFragment() {
         return Color.HSVToColor(hsv)
     }
 
+    // Применение модификаторов настроения к цвету
     private fun applyMoodModifier(color: Int, moods: List<String>): Int {
         val hsv = FloatArray(3)
         Color.colorToHSV(color, hsv)
@@ -363,6 +392,7 @@ class GuestGenerationFragment : BaseFragment() {
         return Color.HSVToColor(hsv)
     }
 
+    // Вычисление среднего цвета из списка
     private fun averageColor(colors: List<Int>): Int {
         val r = colors.sumOf { Color.red(it) }
         val g = colors.sumOf { Color.green(it) }
@@ -371,6 +401,7 @@ class GuestGenerationFragment : BaseFragment() {
         return Color.rgb(r / n, g / n, b / n)
     }
 
+    // Генерация вариаций на основе базового цвета
     private fun generateVariations(baseColor: Int, count: Int = 6): List<String> {
         val hsv = FloatArray(3)
         Color.colorToHSV(baseColor, hsv)
@@ -408,7 +439,9 @@ class GuestGenerationFragment : BaseFragment() {
         return result.toList()
     }
 
-    // --------- UI (text mode) ---------
+    // -------------------------------------------------------------------------
+    // ОТОБРАЖЕНИЕ МНОЖЕСТВЕННЫХ ПАЛИТР (ТЕКСТОВЫЙ РЕЖИМ)
+    // -------------------------------------------------------------------------
 
     private fun showMultiplePalettes(palettes: List<List<String>>) {
         val container = binding.paletteContainerTabs
@@ -489,6 +522,7 @@ class GuestGenerationFragment : BaseFragment() {
         scrollToPalette(currentPaletteIndex)
     }
 
+    // Настройка переключателей между палитрами
     private fun setupSwitchers(paletteCount: Int) {
         binding.btnPrevPalette.setOnClickListener {
             if (currentPaletteIndex > 0) currentPaletteIndex--
@@ -500,6 +534,7 @@ class GuestGenerationFragment : BaseFragment() {
         }
     }
 
+    // Прокрутка к выбранной палитре
     private fun scrollToPalette(index: Int) {
         val container = binding.paletteContainerTabs
         if (container.childCount <= index) return
@@ -507,8 +542,11 @@ class GuestGenerationFragment : BaseFragment() {
         binding.paletteScroll.smoothScrollTo(child.left, 0)
     }
 
-    // --------- UI helpers ---------
+    // -------------------------------------------------------------------------
+    // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ПОЛЬЗОВАТЕЛЬСКОГО ИНТЕРФЕЙСА
+    // -------------------------------------------------------------------------
 
+    // Отображение превью выбранного изображения
     private fun showPreviewChip(uri: Uri) {
         binding.previewChipContainer.visibility = View.VISIBLE
         binding.ivPreviewChip.setImageURI(uri)
@@ -517,6 +555,7 @@ class GuestGenerationFragment : BaseFragment() {
         }
     }
 
+    // Очистка всех результатов генерации
     private fun clearAllResults() {
         binding.paletteContainer.removeAllViews()
         binding.paletteContainerTabs.removeAllViews()
@@ -530,6 +569,7 @@ class GuestGenerationFragment : BaseFragment() {
         binding.imagePaletteScroll.visibility = View.GONE
     }
 
+    // Переход в текстовый режим отображения
     private fun enterTextMode() {
         binding.scrollPalette.visibility = View.VISIBLE
         binding.paletteSwitcherContainer.visibility = View.VISIBLE
@@ -537,6 +577,7 @@ class GuestGenerationFragment : BaseFragment() {
         binding.ivPreview.visibility = View.GONE
     }
 
+    // Переход в режим отображения с изображением
     private fun enterImageMode(resultImageUri: Uri) {
         binding.scrollPalette.visibility = View.GONE
         binding.paletteSwitcherContainer.visibility = View.GONE
@@ -566,6 +607,7 @@ class GuestGenerationFragment : BaseFragment() {
             .start()
     }
 
+    // Отображение палитры для изображения
     private fun showImagePalette(colors: List<String>) {
         val container = binding.imagePaletteContainer
         container.removeAllViews()
@@ -615,7 +657,9 @@ class GuestGenerationFragment : BaseFragment() {
         }
     }
 
-    // --------- Palette from image ---------
+    // -------------------------------------------------------------------------
+    // ГЕНЕРАЦИЯ ПАЛИТРЫ ИЗ ИЗОБРАЖЕНИЯ
+    // -------------------------------------------------------------------------
 
     private fun generatePaletteFromImage(uri: Uri): List<String> {
         return try {
@@ -659,7 +703,9 @@ class GuestGenerationFragment : BaseFragment() {
         }
     }
 
-    // --------- Combined mode modifier ---------
+    // -------------------------------------------------------------------------
+    // КОМБИНИРОВАННАЯ ОБРАБОТКА ТЕКСТА И ИЗОБРАЖЕНИЯ
+    // -------------------------------------------------------------------------
 
     private fun applyTextModifiersToPalette(baseColorsHex: List<String>, text: String): List<String> {
         if (text.isBlank()) return baseColorsHex
@@ -692,6 +738,7 @@ class GuestGenerationFragment : BaseFragment() {
         return if (unique.isNotEmpty()) unique else baseColorsHex
     }
 
+    // Копирование HEX-кода цвета в буфер обмена
     private fun copyToClipboard(hex: String) {
         val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("color", hex))

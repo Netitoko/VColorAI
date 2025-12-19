@@ -1,25 +1,19 @@
-package com.example.vcolorai
+package com.example.vcolorai.data
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.example.vcolorai.GuestGenerationFragment
+import com.example.vcolorai.R
+import com.example.vcolorai.ui.generation.GuestGenerationFragment
 
-/**
- * Activity для гостевого режима.
- *
- * Внутри отображается GuestGenerationFragment,
- * который полностью повторяет GenerationFragment,
- * но БЕЗ сохранения в Firestore.
- */
 class GuestActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Простой контейнер под Fragment
+        // Установка контейнера для фрагмента
         setContentView(R.layout.activity_guest)
 
-        // Чтобы не пересоздавать фрагмент при повороте экрана
+        // Инициализация фрагмента (только при первом создании)
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
                 .replace(

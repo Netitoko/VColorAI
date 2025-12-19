@@ -14,11 +14,12 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.bumptech.glide.Glide
 import com.example.vcolorai.R
-import com.example.vcolorai.model.SavedPalette
+import com.example.vcolorai.data.model.SavedPalette
 import com.example.vcolorai.ui.common.FullscreenImageDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
+// Детали палитры
 class PaletteDetailDialogFragment : DialogFragment() {
 
     companion object {
@@ -29,6 +30,7 @@ class PaletteDetailDialogFragment : DialogFragment() {
         private const val ARG_IMAGE_URI = "arg_image_uri"
         private const val ARG_TAGS = "arg_tags"
 
+        // Создание диалога
         fun newInstance(palette: SavedPalette): PaletteDetailDialogFragment {
             return PaletteDetailDialogFragment().apply {
                 arguments = Bundle().apply {
@@ -47,12 +49,22 @@ class PaletteDetailDialogFragment : DialogFragment() {
     private val auth by lazy { FirebaseAuth.getInstance() }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val view = requireActivity().layoutInflater.inflate(R.layout.dialog_palette_detail, null)
+        val view =
+            requireActivity().layoutInflater.inflate(R.layout.dialog_palette_detail, null)
 
+        // Закрытие
         val btnClose: ImageButton = view.findViewById(R.id.btnClose)
         btnClose.setOnClickListener { dismiss() }
 
         val ivImage: ImageView = view.findViewById(R.id.ivPaletteImage)
+
+        // ProgressBar
+        val progressBar: ProgressBar? = try {
+            view.findViewById(R.id.progressImageLoading)
+        } catch (_: Exception) {
+            null
+        }
+
         val etTitle: EditText = view.findViewById(R.id.etPaletteTitle)
         val container: LinearLayout = view.findViewById(R.id.fullPaletteContainer)
         val tagsContainer: LinearLayout = view.findViewById(R.id.tagsChipsContainer)
@@ -64,25 +76,41 @@ class PaletteDetailDialogFragment : DialogFragment() {
         val paletteId = arguments?.getString(ARG_ID).orEmpty()
         val name = arguments?.getString(ARG_NAME).orEmpty()
         val colors = arguments?.getStringArrayList(ARG_COLORS) ?: arrayListOf()
-        val sourceType = arguments?.getString(ARG_SOURCE_TYPE).orEmpty()
-        val imageUri = arguments?.getString(ARG_IMAGE_URI)
-        val tags = arguments?.getStringArrayList(ARG_TAGS)?.toMutableList() ?: mutableListOf()
+        val imageUriRaw = arguments?.getString(ARG_IMAGE_URI)
+        val tags =
+            arguments?.getStringArrayList(ARG_TAGS)?.toMutableList() ?: mutableListOf()
 
         etTitle.setText(name)
 
-        // ---------- IMAGE ----------
-        if (!imageUri.isNullOrBlank() && (sourceType == "image" || sourceType == "combined")) {
+        // Изображение
+        val imageUri = imageUriRaw?.trim()
+
+        if (!imageUri.isNullOrEmpty()) {
             ivImage.visibility = View.VISIBLE
-            Glide.with(this).load(imageUri).centerCrop().into(ivImage)
+            progressBar?.visibility = View.VISIBLE
+
+            Glide.with(this)
+                .load(imageUri)
+                .placeholder(android.R.drawable.ic_menu_gallery)
+                .error(android.R.drawable.ic_menu_report_image)
+                .centerCrop()
+                .into(ivImage)
+
+            progressBar?.visibility = View.GONE
+
             ivImage.setOnClickListener {
                 FullscreenImageDialog(requireContext(), imageUri).show()
             }
         } else {
+            progressBar?.visibility = View.GONE
             ivImage.visibility = View.GONE
         }
 
-        // ---------- COLORS ----------
+        // Цвета
         val density = resources.displayMetrics.density
+        val colorH = (48 * density).toInt()
+        val margin = (6 * density).toInt()
+
         colors.forEach { hex ->
             val row = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.HORIZONTAL
@@ -92,32 +120,34 @@ class PaletteDetailDialogFragment : DialogFragment() {
             val colorView = View(requireContext()).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     0,
-                    (48 * density).toInt(),
+                    colorH,
                     1f
                 ).apply {
-                    setMargins(
-                        (6 * density).toInt(),
-                        (6 * density).toInt(),
-                        (6 * density).toInt(),
-                        (6 * density).toInt()
-                    )
+                    setMargins(margin, margin, margin, margin)
                 }
 
                 background = GradientDrawable().apply {
                     cornerRadius = 12 * density
-                    setColor(Color.parseColor(hex))
+                    try {
+                        setColor(Color.parseColor(hex))
+                    } catch (_: Exception) {
+                        setColor(Color.GRAY)
+                    }
                 }
             }
 
-
             val tvHex = TextView(requireContext()).apply {
                 text = hex
-                setPadding(16, 0, 0, 0)
+                setPadding((16 * density).toInt(), 0, 0, 0)
                 setOnClickListener {
                     val cb = requireContext()
                         .getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     cb.setPrimaryClip(ClipData.newPlainText("color", hex))
-                    Toast.makeText(requireContext(), "Скопировано", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Скопировано: $hex",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
 
@@ -126,7 +156,7 @@ class PaletteDetailDialogFragment : DialogFragment() {
             container.addView(row)
         }
 
-        // ---------- TAGS ----------
+        // Теги
         fun renderTags() {
             tagsContainer.removeAllViews()
             tags.forEach { tag ->
@@ -159,7 +189,7 @@ class PaletteDetailDialogFragment : DialogFragment() {
             }
         }
 
-        // ---------- SAVE ----------
+        // Сохранение
         btnSave.setOnClickListener {
             db.collection("color_palettes").document(paletteId)
                 .update(
@@ -169,12 +199,23 @@ class PaletteDetailDialogFragment : DialogFragment() {
                     )
                 )
                 .addOnSuccessListener {
-                    Toast.makeText(requireContext(), "Сохранено", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Сохранено",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     dismiss()
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(
+                        requireContext(),
+                        "Ошибка: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
         }
 
-        // ---------- PUBLISH / UNPUBLISH ----------
+        // Публикация
         db.collection("color_palettes").document(paletteId)
             .get()
             .addOnSuccessListener { snap ->
@@ -185,7 +226,9 @@ class PaletteDetailDialogFragment : DialogFragment() {
                     isPublic -> {
                         btnPublish.text = "Снять с публикации"
                         btnPublish.isEnabled = true
-                        btnPublish.setOnClickListener { unpublishPalette(paletteId) }
+                        btnPublish.setOnClickListener {
+                            unpublishPalette(paletteId)
+                        }
                     }
 
                     publishedAt != null -> {
@@ -196,9 +239,23 @@ class PaletteDetailDialogFragment : DialogFragment() {
                     else -> {
                         btnPublish.text = "Опубликовать"
                         btnPublish.isEnabled = true
-                        btnPublish.setOnClickListener { publishPalette(paletteId) }
+                        btnPublish.setOnClickListener {
+                            publishPalette(paletteId)
+                        }
                     }
                 }
+            }
+            .addOnFailureListener { e ->
+                btnPublish.text = "Опубликовать"
+                btnPublish.isEnabled = true
+                btnPublish.setOnClickListener {
+                    publishPalette(paletteId)
+                }
+                Toast.makeText(
+                    requireContext(),
+                    "Ошибка: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
 
         return AlertDialog.Builder(requireContext())
@@ -206,8 +263,17 @@ class PaletteDetailDialogFragment : DialogFragment() {
             .create()
     }
 
+    // Публикация палитры
     private fun publishPalette(paletteId: String) {
-        val uid = auth.currentUser?.uid ?: return
+        auth.currentUser?.uid ?: run {
+            Toast.makeText(
+                requireContext(),
+                "Нужно войти в аккаунт",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
         val ref = db.collection("color_palettes").document(paletteId)
 
         db.runTransaction { tx ->
@@ -215,16 +281,30 @@ class PaletteDetailDialogFragment : DialogFragment() {
             if (snap.getBoolean("isPublic") == true) error("ALREADY_PUBLIC")
             if (snap.contains("publishedAt")) error("ALREADY_PUBLISHED_ONCE")
 
-            tx.update(ref, mapOf(
-                "isPublic" to true,
-                "publishedAt" to System.currentTimeMillis()
-            ))
+            tx.update(
+                ref,
+                mapOf(
+                    "isPublic" to true,
+                    "publishedAt" to System.currentTimeMillis()
+                )
+            )
         }.addOnSuccessListener {
-            Toast.makeText(requireContext(), "Опубликовано", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                "Опубликовано",
+                Toast.LENGTH_SHORT
+            ).show()
             dismiss()
+        }.addOnFailureListener { e ->
+            Toast.makeText(
+                requireContext(),
+                "Ошибка публикации: ${e.message}",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
+    // Снятие с публикации
     private fun unpublishPalette(paletteId: String) {
         val ref = db.collection("color_palettes").document(paletteId)
 
@@ -232,13 +312,26 @@ class PaletteDetailDialogFragment : DialogFragment() {
             val snap = tx.get(ref)
             if (snap.getBoolean("isPublic") != true) error("NOT_PUBLIC")
 
-            tx.update(ref, mapOf(
-                "isPublic" to false,
-                "unpublishedAt" to System.currentTimeMillis()
-            ))
+            tx.update(
+                ref,
+                mapOf(
+                    "isPublic" to false,
+                    "unpublishedAt" to System.currentTimeMillis()
+                )
+            )
         }.addOnSuccessListener {
-            Toast.makeText(requireContext(), "Снято с публикации", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                "Снято с публикации",
+                Toast.LENGTH_SHORT
+            ).show()
             dismiss()
+        }.addOnFailureListener { e ->
+            Toast.makeText(
+                requireContext(),
+                "Ошибка: ${e.message}",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 }

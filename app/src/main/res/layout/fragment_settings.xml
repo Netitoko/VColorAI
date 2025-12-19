@@ -213,12 +213,12 @@
     <ImageButton
         android:id="@+id/btnCloseSettings"
         android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_margin="12dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="top|end"
+        android:layout_margin="12dp"
         android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Закрыть настройки"
         android:src="@drawable/ic_close"
-        android:tint="?attr/colorOnSurface"
-        android:contentDescription="Закрыть настройки" />
+        android:tint="?attr/colorOnSurface" />
 
 </FrameLayout>

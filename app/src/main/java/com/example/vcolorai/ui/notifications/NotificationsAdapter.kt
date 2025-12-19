@@ -10,23 +10,34 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+// Адаптер списка уведомлений
 class NotificationsAdapter(
     private val onClick: (NotificationItem) -> Unit
 ) : RecyclerView.Adapter<NotificationsAdapter.VH>() {
 
+    // Элементы уведомлений
     private val items = mutableListOf<NotificationItem>()
 
-    fun submitList(list: List<NotificationItem>) { // ✅ вместо submit()
+    // Обновление списка
+    fun submitList(list: List<NotificationItem>) {
         items.clear()
         items.addAll(list)
         notifyDataSetChanged()
     }
 
+    // ViewHolder уведомления
     inner class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val tvTitle: TextView = itemView.findViewById(R.id.tvNotifTitle)
-        private val tvMessage: TextView = itemView.findViewById(R.id.tvNotifMessage)
-        private val tvTime: TextView = itemView.findViewById(R.id.tvNotifTime)
 
+        private val tvTitle: TextView =
+            itemView.findViewById(R.id.tvNotifTitle)
+
+        private val tvMessage: TextView =
+            itemView.findViewById(R.id.tvNotifMessage)
+
+        private val tvTime: TextView =
+            itemView.findViewById(R.id.tvNotifTime)
+
+        // Привязка данных
         fun bind(item: NotificationItem) {
             tvTitle.text = item.title
             tvMessage.text = item.message
@@ -43,9 +54,12 @@ class NotificationsAdapter(
         return VH(v)
     }
 
-    override fun onBindViewHolder(holder: VH, position: Int) = holder.bind(items[position])
+    override fun onBindViewHolder(holder: VH, position: Int) =
+        holder.bind(items[position])
+
     override fun getItemCount(): Int = items.size
 
+    // Форматирование времени
     private fun formatTime(ms: Long): String {
         if (ms <= 0L) return ""
         val sdf = SimpleDateFormat("dd.MM HH:mm", Locale.getDefault())

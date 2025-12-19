@@ -11,6 +11,7 @@ import com.example.vcolorai.ui.common.BaseFragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
+// Экран уведомлений
 class NotificationsFragment : BaseFragment() {
 
     private var _binding: FragmentNotificationsBinding? = null
@@ -34,17 +35,21 @@ class NotificationsFragment : BaseFragment() {
         return binding.root
     }
 
+    // Настройка списка
     private fun setupRecycler() {
         adapter = NotificationsAdapter { notif ->
-            // пометить прочитанным
+            // Пометить как прочитанное
             markAsRead(notif)
             Toast.makeText(requireContext(), notif.title, Toast.LENGTH_SHORT).show()
         }
 
-        binding.rvNotifications.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvNotifications.layoutManager =
+            LinearLayoutManager(requireContext())
+
         binding.rvNotifications.adapter = adapter
     }
 
+    // Загрузка уведомлений
     private fun loadNotifications() {
         val user = auth.currentUser ?: run {
             showEmpty(true)
@@ -54,7 +59,10 @@ class NotificationsFragment : BaseFragment() {
         db.collection("users")
             .document(user.uid)
             .collection("notifications")
-            .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .orderBy(
+                "createdAt",
+                com.google.firebase.firestore.Query.Direction.DESCENDING
+            )
             .get()
             .addOnSuccessListener { snap ->
                 val list = snap.documents.map { doc ->
@@ -70,15 +78,20 @@ class NotificationsFragment : BaseFragment() {
                     )
                 }
 
-                adapter.submitList(list) // ✅ больше нет submit()
+                adapter.submitList(list)
                 showEmpty(list.isEmpty())
             }
             .addOnFailureListener { e ->
                 showEmpty(true)
-                Toast.makeText(requireContext(), "Ошибка: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    "Ошибка: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
     }
 
+    // Пометка уведомления как прочитанного
     private fun markAsRead(item: NotificationItem) {
         val user = auth.currentUser ?: return
         if (item.isRead) return
@@ -90,9 +103,13 @@ class NotificationsFragment : BaseFragment() {
             .update("isRead", true)
     }
 
+    // Показ пустого состояния
     private fun showEmpty(isEmpty: Boolean) {
-        binding.tvNotificationsEmpty.visibility = if (isEmpty) View.VISIBLE else View.GONE
-        binding.rvNotifications.visibility = if (isEmpty) View.GONE else View.VISIBLE
+        binding.tvNotificationsEmpty.visibility =
+            if (isEmpty) View.VISIBLE else View.GONE
+
+        binding.rvNotifications.visibility =
+            if (isEmpty) View.GONE else View.VISIBLE
     }
 
     override fun onDestroyView() {

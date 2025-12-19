@@ -15,10 +15,12 @@ import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
 
+// Генерация палитр (online)
 object PaletteGenerator {
 
-    private const val API_KEY = ""
-    private const val FOLDER_ID = ""
+    // API ключи
+    private const val API_KEY = "AQVNxfonCHS5isAPbX3kZzGkyTiTnAcreDVgIF5g"
+    private const val FOLDER_ID = "b1glt4t38j53448m7b0n"
 
     private val gson = Gson()
 
@@ -27,7 +29,9 @@ object PaletteGenerator {
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
-        val client = OkHttpClient.Builder().addInterceptor(logging).build()
+        val client = OkHttpClient.Builder()
+            .addInterceptor(logging)
+            .build()
 
         Retrofit.Builder()
             .baseUrl("https://llm.api.cloud.yandex.net/v1/")
@@ -37,6 +41,7 @@ object PaletteGenerator {
             .create(YandexPaletteApi::class.java)
     }
 
+    // Генерация палитры через Yandex GPT
     suspend fun generateOnlinePalette(prompt: String): List<String> =
         withContext(Dispatchers.IO) {
 
@@ -65,10 +70,15 @@ object PaletteGenerator {
 
             val body = JsonObject().apply {
                 addProperty("model", "gpt://$FOLDER_ID/yandexgpt-lite/latest")
-                add("messages", gson.toJsonTree(listOf(
-                    mapOf("role" to "system", "content" to systemPrompt),
-                    mapOf("role" to "user", "content" to userPrompt)
-                )))
+                add(
+                    "messages",
+                    gson.toJsonTree(
+                        listOf(
+                            mapOf("role" to "system", "content" to systemPrompt),
+                            mapOf("role" to "user", "content" to userPrompt)
+                        )
+                    )
+                )
                 addProperty("temperature", 0.4)
                 addProperty("max_tokens", 400)
             }
@@ -82,12 +92,14 @@ object PaletteGenerator {
             parsePalette(response)
         }
 
-
+    // Парсинг JSON с цветами
     private fun parsePalette(json: JsonObject): List<String> {
         return try {
             val content =
-                json["choices"].asJsonArray[0].asJsonObject["message"]
-                    .asJsonObject["content"].asString
+                json["choices"].asJsonArray[0]
+                    .asJsonObject["message"]
+                    .asJsonObject["content"]
+                    .asString
 
             val obj = gson.fromJson(content, JsonObject::class.java)
 
@@ -104,7 +116,9 @@ object PaletteGenerator {
 
             for (g in groups) {
                 if (obj.has(g)) {
-                    obj[g].asJsonArray.forEach { result.add(it.asString) }
+                    obj[g].asJsonArray.forEach {
+                        result.add(it.asString)
+                    }
                 }
             }
 
@@ -115,8 +129,10 @@ object PaletteGenerator {
         }
     }
 
+    // Проверка наличия интернета
     fun hasInternet(context: Context): Boolean {
-        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val cm =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val nw = cm.activeNetwork ?: return false
         val nc = cm.getNetworkCapabilities(nw) ?: return false
         return nc.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
@@ -124,9 +140,9 @@ object PaletteGenerator {
     }
 }
 
-
-// Retrofit interface
+// Retrofit API
 interface YandexPaletteApi {
+
     @POST("chat/completions")
     suspend fun generatePalette(
         @Header("Authorization") auth: String,

@@ -1,10 +1,12 @@
-package com.example.vcolorai
+package com.example.vcolorai.data
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import com.example.vcolorai.databinding.ActivitySplashBinding
+import com.example.vcolorai.ui.auth.ChooseAccountActivity
+import com.example.vcolorai.ui.auth.LoginActivity
 import com.google.firebase.auth.FirebaseAuth
 
 class SplashActivity : AppCompatActivity() {
@@ -14,10 +16,7 @@ class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        // ✅ 1) Применяем сохранённый язык приложения (RU/EN/системный)
-        AppCompatDelegate.setApplicationLocales(AppCompatDelegate.getApplicationLocales())
-
-        // ✅ 2) (опционально, но советую) применяем сохранённую тему ДО setContentView
+        // Применение сохраненной темы перед инициализацией интерфейса
         val prefs = getSharedPreferences("app_settings", MODE_PRIVATE)
         val savedTheme = prefs.getInt(
             "app_theme",
@@ -32,16 +31,19 @@ class SplashActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
+        // Задержка для отображения splash-экрана с последующим переходом
         binding.root.postDelayed({
             val currentUser = auth.currentUser
             val localPrefs = getSharedPreferences("local_users", MODE_PRIVATE)
             val savedUsers = localPrefs.all
 
-            // Если пользователь авторизован, но его нет в сохранённых — выходим из аккаунта
+            // Проверка согласованности: если пользователь авторизован в Firebase,
+            // но отсутствует в локальном хранилище, выполняем выход
             if (currentUser != null && !savedUsers.containsKey(currentUser.uid)) {
                 auth.signOut()
             }
 
+            // Выбор активности для перехода в зависимости от состояния авторизации
             when {
                 auth.currentUser != null -> {
                     startActivity(Intent(this, MainActivity::class.java))

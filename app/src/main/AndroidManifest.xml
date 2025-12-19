@@ -41,7 +41,7 @@
 
         <!-- Splash -->
         <activity
-            android:name=".SplashActivity"
+            android:name=".data.SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -50,19 +50,19 @@
         </activity>
 
         <!-- Auth -->
-        <activity android:name=".LoginActivity" />
-        <activity android:name=".RegisterActivity" />
-        <activity android:name=".GuestActivity" />
-        <activity android:name=".ChooseAccountActivity" />
+        <activity android:name=".ui.auth.LoginActivity" />
+        <activity android:name=".ui.auth.RegisterActivity" />
+        <activity android:name=".data.GuestActivity" />
+        <activity android:name=".ui.auth.ChooseAccountActivity" />
 
         <!-- Main -->
         <activity
-            android:name=".MainActivity"
+            android:name=".data.MainActivity"
             android:exported="false" />
 
         <!-- Reset password -->
         <activity
-            android:name=".ResetPasswordActivity"
+            android:name=".ui.auth.ResetPasswordActivity"
             android:exported="true"
             android:launchMode="singleTask">
 

@@ -7,11 +7,13 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.vcolorai.R
 
+// Модель сообщения чата
 data class ChatMessage(
     val text: String,
     val isUser: Boolean
 )
 
+// Адаптер чата
 class ChatAdapter(
     private val items: MutableList<ChatMessage>,
     private val onMessageLongClick: (String) -> Unit
@@ -45,12 +47,14 @@ class ChatAdapter(
 
     override fun getItemCount(): Int = items.size
 
+    // ViewHolder
     class ChatViewHolder(
         itemView: View,
         private val onMessageLongClick: (String) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
 
-        private val tvMessage: TextView = itemView.findViewById(R.id.tvMessage)
+        private val tvMessage: TextView =
+            itemView.findViewById(R.id.tvMessage)
 
         fun bind(msg: ChatMessage) {
             tvMessage.text = msg.text

@@ -1,4 +1,4 @@
-package com.example.vcolorai
+package com.example.vcolorai.data
 
 import android.os.Bundle
 import android.util.Log
@@ -6,8 +6,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.example.vcolorai.databinding.ActivityMainBinding
-import com.example.vcolorai.GenerationFragment
-import com.example.vcolorai.ui.ProfileFragment
+import com.example.vcolorai.ui.generation.GenerationFragment
+import com.example.vcolorai.R
+import com.example.vcolorai.ui.profile.ProfileFragment
 import com.example.vcolorai.ui.bot.IdeasBotFragment
 import com.example.vcolorai.ui.palettes.PalettesFragment
 import com.example.vcolorai.ui.publicfeed.PublicFeedFragment
@@ -29,13 +30,13 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ✅ ВКЛЮЧАЕМ логирование Firestore (для поиска PERMISSION_DENIED)
+        // Включение подробного логирования Firestore для отладки
         FirebaseFirestore.setLoggingEnabled(true)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // ✅ МИГРАЦИЯ/ПОДДЕРЖКА УНИКАЛЬНОСТИ НИКОВ ДЛЯ СТАРЫХ АККАУНТОВ
+        // Миграция уникальных имен пользователей для существующих аккаунтов
         ensureUsernameIndex()
 
         binding.bottomNavigationView.setOnItemSelectedListener { item ->
@@ -58,6 +59,7 @@ class MainActivity : AppCompatActivity() {
         binding.bottomNavigationView.selectedItemId = R.id.nav_generation
     }
 
+    // Сохранение состояния навигации при повороте экрана
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putInt(KEY_SELECTED_NAV, binding.bottomNavigationView.selectedItemId)
         super.onSaveInstanceState(outState)
@@ -69,13 +71,15 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    // ---------------- Username unique index migration ----------------
+    // -------------------------------------------------------------------------
+    // МИГРАЦИЯ ИНДЕКСА УНИКАЛЬНЫХ ИМЕН ПОЛЬЗОВАТЕЛЕЙ
+    // -------------------------------------------------------------------------
 
     private fun usernameKey(username: String): String = username.trim().lowercase()
 
     private fun isUsernameValidForIndex(username: String): Boolean {
         if (username.isBlank()) return false
-        // раз мы запрещаем пробелы в нике — индексируем только корректные
+        // Запрет пробелов и других whitespace-символов для индексации
         if (username.any { it.isWhitespace() }) return false
         return true
     }
@@ -93,7 +97,7 @@ class MainActivity : AppCompatActivity() {
             ref.get()
                 .addOnSuccessListener { snap ->
                     if (!snap.exists()) {
-                        // индекса нет -> создаём (занимаем ник)
+                        // Создание индекса для нового уникального имени
                         ref.set(mapOf("uid" to uid, "createdAt" to System.currentTimeMillis()))
                             .addOnFailureListener { e ->
                                 Log.e(TAG, "ensureUsernameIndex set error", e)
@@ -101,7 +105,7 @@ class MainActivity : AppCompatActivity() {
                     } else {
                         val owner = snap.getString("uid").orEmpty()
                         if (owner.isNotBlank() && owner != uid) {
-                            // конфликт: ник уже принадлежит другому пользователю
+                            // Конфликт: имя пользователя уже занято другим аккаунтом
                             Toast.makeText(
                                 this,
                                 "Внимание: ваш ник уже занят другим пользователем. Поменяйте ник в профиле.",
@@ -115,14 +119,14 @@ class MainActivity : AppCompatActivity() {
                 }
         }
 
-        // 1) пробуем взять username из users/{uid}
+        // 1) Попытка получить имя пользователя из коллекции users
         db.collection("users").document(uid).get()
             .addOnSuccessListener { doc ->
                 val username = doc.getString("username")?.trim().orEmpty()
                 if (username.isNotBlank()) {
                     tryIndex(username)
                 } else {
-                    // 2) fallback: public_users/{uid}
+                    // 2) Резервный вариант: получение имени из коллекции public_users
                     db.collection("public_users").document(uid).get()
                         .addOnSuccessListener { pdoc ->
                             val uname = pdoc.getString("username")?.trim().orEmpty()

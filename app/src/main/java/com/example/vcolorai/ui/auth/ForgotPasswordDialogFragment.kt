@@ -13,21 +13,26 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.example.vcolorai.EmailSender
 import com.example.vcolorai.R
-import com.example.vcolorai.ResetPasswordActivity
 import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.auth.FirebaseAuth
 
+// Диалог восстановления пароля
 class ForgotPasswordDialogFragment : DialogFragment() {
 
+    // Firebase auth
     private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
+    // Код подтверждения
     private var code: String? = null
+
+    // Таймер повторной отправки
     private var timer: CountDownTimer? = null
     private var timerRunning = false
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val appContext = requireContext().applicationContext
-        val view = LayoutInflater.from(appContext).inflate(R.layout.dialog_forgot_password, null)
+        val view = LayoutInflater.from(appContext)
+            .inflate(R.layout.dialog_forgot_password, null)
 
         val etEmail = view.findViewById<EditText>(R.id.etEmail)
         val btnSendCode = view.findViewById<Button>(R.id.btnSendCode)
@@ -35,15 +40,22 @@ class ForgotPasswordDialogFragment : DialogFragment() {
         val etCode = view.findViewById<EditText>(R.id.etCode)
         val btnConfirmCode = view.findViewById<Button>(R.id.btnConfirmCode)
 
+        // Toast helper
         fun toast(msg: String, long: Boolean = false) {
-            Toast.makeText(appContext, msg, if (long) Toast.LENGTH_LONG else Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                appContext,
+                msg,
+                if (long) Toast.LENGTH_LONG else Toast.LENGTH_SHORT
+            ).show()
         }
 
+        // Показать ввод кода
         fun showCodeUi() {
             etCode.visibility = View.VISIBLE
             btnConfirmCode.visibility = View.VISIBLE
         }
 
+        // Таймер ожидания перед повторной отправкой
         fun startCountdown() {
             timer?.cancel()
             timerRunning = true
@@ -51,7 +63,8 @@ class ForgotPasswordDialogFragment : DialogFragment() {
 
             timer = object : CountDownTimer(60_000, 1000) {
                 override fun onTick(millisUntilFinished: Long) {
-                    btnSendCode.text = "Повторно через ${millisUntilFinished / 1000} c"
+                    btnSendCode.text =
+                        "Повторно через ${millisUntilFinished / 1000} c"
                 }
 
                 override fun onFinish() {
@@ -62,8 +75,8 @@ class ForgotPasswordDialogFragment : DialogFragment() {
             }.start()
         }
 
+        // Диалоги после отправки письма Firebase
         fun showAfterEmailDialogs(email: String) {
-            // 1) popup: письмо отправлено
             AlertDialog.Builder(requireContext())
                 .setTitle("Письмо отправлено")
                 .setMessage("Мы отправили письмо для сброса пароля на:\n$email")
@@ -71,7 +84,6 @@ class ForgotPasswordDialogFragment : DialogFragment() {
                 .setPositiveButton("Ок") { d1, _ ->
                     d1.dismiss()
 
-                    // 2) popup: сразу ведём на экран вставки ссылки
                     AlertDialog.Builder(requireContext())
                         .setTitle("Дальше — вставьте ссылку")
                         .setMessage(
@@ -81,9 +93,12 @@ class ForgotPasswordDialogFragment : DialogFragment() {
                         .setCancelable(false)
                         .setPositiveButton("Вставить ссылку") { d2, _ ->
                             d2.dismiss()
-                            // Открываем экран сброса пароля (ручной ввод ссылки)
-                            startActivity(Intent(requireContext(), ResetPasswordActivity::class.java))
-                            // Можно закрыть сам диалог восстановления
+                            startActivity(
+                                Intent(
+                                    requireContext(),
+                                    ResetPasswordActivity::class.java
+                                )
+                            )
                             dismissAllowingStateLoss()
                         }
                         .setNegativeButton("Закрыть") { d2, _ ->
@@ -95,19 +110,29 @@ class ForgotPasswordDialogFragment : DialogFragment() {
                 .show()
         }
 
-        fun sendFirebaseResetLink(email: String, onDone: (Boolean, String?) -> Unit) {
-            // Можно любой https. Оставим на твоём домене.
-            val continueUrl = "https://vcolorai-a9616.firebaseapp.com/reset"
+        // Отправка reset-ссылки Firebase
+        fun sendFirebaseResetLink(
+            email: String,
+            onDone: (Boolean, String?) -> Unit
+        ) {
+            val continueUrl =
+                "https://vcolorai-a9616.firebaseapp.com/reset"
 
             val acs = ActionCodeSettings.newBuilder()
                 .setUrl(continueUrl)
                 .setHandleCodeInApp(true)
-                .setAndroidPackageName(appContext.packageName, true, null)
+                .setAndroidPackageName(
+                    appContext.packageName,
+                    true,
+                    null
+                )
                 .build()
 
             auth.sendPasswordResetEmail(email, acs)
                 .addOnSuccessListener { onDone(true, null) }
-                .addOnFailureListener { e -> onDone(false, e.message) }
+                .addOnFailureListener { e ->
+                    onDone(false, e.message)
+                }
         }
 
         val dialog = AlertDialog.Builder(requireContext())
@@ -116,14 +141,18 @@ class ForgotPasswordDialogFragment : DialogFragment() {
             .setNegativeButton("Закрыть", null)
             .create()
 
-        // 1) отправка кода (как регистрация)
+        // Отправка кода
         btnSendCode.setOnClickListener {
             if (timerRunning) {
                 toast("Подождите перед повторной отправкой")
                 return@setOnClickListener
             }
 
-            val email = etEmail.text.toString().trim().lowercase()
+            val email = etEmail.text
+                .toString()
+                .trim()
+                .lowercase()
+
             if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                 toast("Введите корректный email")
                 return@setOnClickListener
@@ -148,7 +177,7 @@ class ForgotPasswordDialogFragment : DialogFragment() {
             }
         }
 
-        // 2) подтвердить код -> отправить письмо Firebase -> показать 2 popup
+        // Проверка кода и отправка письма Firebase
         btnConfirmCode.setOnClickListener {
             val entered = etCode.text.toString().trim()
             if (code.isNullOrBlank() || entered != code) {
@@ -156,9 +185,11 @@ class ForgotPasswordDialogFragment : DialogFragment() {
                 return@setOnClickListener
             }
 
-            val email = etEmail.text.toString().trim().lowercase()
+            val email = etEmail.text
+                .toString()
+                .trim()
+                .lowercase()
 
-            // отправляем официальное письмо Firebase
             sendFirebaseResetLink(email) { ok, err ->
                 activity?.runOnUiThread {
                     if (ok) {
@@ -177,6 +208,7 @@ class ForgotPasswordDialogFragment : DialogFragment() {
         return dialog
     }
 
+    // Очистка таймера
     override fun onDestroyView() {
         timer?.cancel()
         super.onDestroyView()

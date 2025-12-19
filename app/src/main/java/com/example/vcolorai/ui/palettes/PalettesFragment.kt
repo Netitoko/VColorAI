@@ -6,13 +6,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.vcolorai.databinding.FragmentPalettesBinding
-import com.example.vcolorai.model.SavedPalette
+import com.example.vcolorai.data.model.SavedPalette
+import com.example.vcolorai.ui.common.BaseFragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.example.vcolorai.ui.common.BaseFragment
 
 class PalettesFragment : BaseFragment() {
 
@@ -25,7 +24,8 @@ class PalettesFragment : BaseFragment() {
     private lateinit var adapter: PalettesAdapter
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentPalettesBinding.inflate(inflater, container, false)
@@ -41,14 +41,19 @@ class PalettesFragment : BaseFragment() {
         return binding.root
     }
 
+    // ---------- RecyclerView ----------
+
     private fun setupRecyclerView() {
         adapter = PalettesAdapter(emptyList()) { palette ->
             showPaletteDetail(palette)
         }
 
-        binding.rvPalettes.layoutManager = GridLayoutManager(requireContext(), 2)
+        binding.rvPalettes.layoutManager =
+            GridLayoutManager(requireContext(), 2)
         binding.rvPalettes.adapter = adapter
     }
+
+    // ---------- Result listener ----------
 
     private fun setupResultListener() {
         parentFragmentManager.setFragmentResultListener(
@@ -62,17 +67,27 @@ class PalettesFragment : BaseFragment() {
         }
     }
 
+    // ---------- Top bar ----------
+
     private fun setupTopBar() {
         binding.tvTitle.text = "VColor AI"
 
         binding.btnDeletePalettes.setOnClickListener {
             if (!adapter.isInSelectionMode()) {
                 adapter.setSelectionMode(true)
-                Toast.makeText(requireContext(), "Выберите палитры для удаления", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    "Выберите палитры для удаления",
+                    Toast.LENGTH_SHORT
+                ).show()
             } else {
                 val selected = adapter.getSelectedItems()
                 if (selected.isEmpty()) {
-                    Toast.makeText(requireContext(), "Не выбрано ни одной палитры", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Не выбрано ни одной палитры",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     return@setOnClickListener
                 }
 
@@ -80,7 +95,9 @@ class PalettesFragment : BaseFragment() {
 
                 AlertDialog.Builder(requireContext())
                     .setTitle("Удалить палитры")
-                    .setMessage("Вы уверены, что хотите удалить $count палитр(ы)?")
+                    .setMessage(
+                        "Вы уверены, что хотите удалить $count палитр(ы)?"
+                    )
                     .setNegativeButton("Отмена", null)
                     .setPositiveButton("Удалить") { _, _ ->
                         deleteSelectedPalettes(selected)
@@ -90,13 +107,17 @@ class PalettesFragment : BaseFragment() {
         }
     }
 
+    // ---------- Delete ----------
+
     private fun deleteSelectedPalettes(selected: List<SavedPalette>) {
         val user = auth.currentUser ?: return
         val ids = selected.map { it.id }
 
         ids.forEach { paletteId ->
 
-            val paletteRef = db.collection("color_palettes").document(paletteId)
+            val paletteRef =
+                db.collection("color_palettes").document(paletteId)
+
             val userLikeRef = db.collection("users")
                 .document(user.uid)
                 .collection("liked_palettes")
@@ -104,7 +125,7 @@ class PalettesFragment : BaseFragment() {
 
             db.runBatch { batch ->
                 batch.delete(paletteRef)
-                batch.delete(userLikeRef) // ✅ КЛЮЧЕВОЕ ИЗМЕНЕНИЕ
+                batch.delete(userLikeRef)
             }.addOnFailureListener { e ->
                 Toast.makeText(
                     requireContext(),
@@ -116,13 +137,18 @@ class PalettesFragment : BaseFragment() {
 
         adapter.removeByIds(ids)
         adapter.setSelectionMode(false)
-        Toast.makeText(requireContext(), "Удалено: ${ids.size}", Toast.LENGTH_SHORT).show()
+
+        Toast.makeText(
+            requireContext(),
+            "Удалено: ${ids.size}",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
+    // ---------- Load palettes ----------
 
     private fun loadPalettes() {
-        val user = auth.currentUser
-        if (user == null) {
+        val user = auth.currentUser ?: run {
             Toast.makeText(
                 requireContext(),
                 "Доступно только авторизованным пользователям",
@@ -137,7 +163,7 @@ class PalettesFragment : BaseFragment() {
             .addOnSuccessListener { snapshot ->
                 val list = snapshot.documents.mapNotNull { doc ->
                     val colorsAny = doc.get("colors") as? List<*>
-                    if (colorsAny == null) return@mapNotNull null
+                        ?: return@mapNotNull null
                     val colors = colorsAny.map { it.toString() }
 
                     val tagsAny = doc.get("tags") as? List<*>
@@ -146,7 +172,7 @@ class PalettesFragment : BaseFragment() {
                     val sourceType = doc.getString("sourceType") ?: ""
                     val sourceData = doc.getString("sourceData")
 
-                    // 👉 Пытаемся вытащить imageUri максимально надёжно
+                    // imageUri: сначала поле, потом fallback
                     val fieldImageUri = doc.getString("imageUri")
                     val rawImageUri = when {
                         !fieldImageUri.isNullOrBlank() -> fieldImageUri
@@ -165,8 +191,7 @@ class PalettesFragment : BaseFragment() {
                         imageUri = rawImageUri,
                         promptText = doc.getString("promptText")
                     )
-                }
-                    .sortedByDescending { it.creationDate }
+                }.sortedByDescending { it.creationDate }
 
                 adapter.submitList(list)
             }
@@ -179,9 +204,12 @@ class PalettesFragment : BaseFragment() {
             }
     }
 
+    // ---------- Details ----------
+
     private fun showPaletteDetail(palette: SavedPalette) {
-        val dialog = PaletteDetailDialogFragment.newInstance(palette)
-        dialog.show(parentFragmentManager, "palette_detail")
+        PaletteDetailDialogFragment
+            .newInstance(palette)
+            .show(parentFragmentManager, "palette_detail")
     }
 
     override fun onDestroyView() {

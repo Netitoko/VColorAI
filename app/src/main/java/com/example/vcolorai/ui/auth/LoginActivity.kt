@@ -1,12 +1,13 @@
-package com.example.vcolorai
+package com.example.vcolorai.ui.auth
 
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.vcolorai.data.MainActivity
 import com.example.vcolorai.databinding.ActivityLoginBinding
-import com.example.vcolorai.ui.auth.ForgotPasswordDialogFragment
+import com.example.vcolorai.data.GuestActivity
 import com.google.firebase.auth.FirebaseAuth
 
 class LoginActivity : AppCompatActivity() {
@@ -21,7 +22,7 @@ class LoginActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
-        // Вход
+        // Аутентификация пользователя
         binding.btnLogin.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString().trim()
@@ -34,13 +35,13 @@ class LoginActivity : AppCompatActivity() {
             loginUser(email, password)
         }
 
-        // 🔐 Забыли пароль? — теперь открывает наш диалог
+        // Диалог восстановления пароля
         binding.tvForgotPassword.setOnClickListener {
             ForgotPasswordDialogFragment()
                 .show(supportFragmentManager, "forgot_password")
         }
 
-        // Гостевой вход
+        // Гостевой режим
         binding.btnGuest.setOnClickListener {
             startActivity(Intent(this, GuestActivity::class.java))
             finish()
@@ -51,13 +52,14 @@ class LoginActivity : AppCompatActivity() {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
 
-        // Если пришёл email из ChooseAccountActivity — подставляем его
+        // Автозаполнение email, выбранного в ChooseAccountActivity
         val selectedEmail = intent.getStringExtra("selectedEmail")
         if (!selectedEmail.isNullOrEmpty()) {
             binding.etEmail.setText(selectedEmail)
         }
     }
 
+    // Аутентификация через Firebase
     private fun loginUser(email: String, password: String) {
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
@@ -65,7 +67,7 @@ class LoginActivity : AppCompatActivity() {
                     val user = auth.currentUser
                     Toast.makeText(this, "Успешный вход!", Toast.LENGTH_SHORT).show()
 
-                    // ✅ Сохраняем пользователя, если стоит галочка
+                    // Сохранение пользователя в локальном хранилище при включенной опции "запомнить"
                     if (binding.cbRememberMe.isChecked && user != null) {
                         saveUserLocally(user.uid, user.email ?: "")
                     }
@@ -82,6 +84,7 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
+    // Сохранение данных пользователя в SharedPreferences
     private fun saveUserLocally(uid: String, email: String) {
         val prefs = getSharedPreferences("local_users", Context.MODE_PRIVATE)
         prefs.edit()

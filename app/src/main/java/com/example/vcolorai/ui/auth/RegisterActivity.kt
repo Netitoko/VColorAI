@@ -1,4 +1,4 @@
-package com.example.vcolorai
+package com.example.vcolorai.ui.auth
 
 import android.app.AlertDialog
 import android.content.Intent
@@ -13,6 +13,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
+import com.example.vcolorai.EmailSender
+import com.example.vcolorai.R
 import com.example.vcolorai.databinding.ActivityRegisterBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
@@ -35,12 +37,12 @@ class RegisterActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
-        // 🧠 Подсказки по паролю
+        // Валидация пароля в реальном времени
         binding.etPassword.addTextChangedListener {
             updatePasswordRequirements(it.toString())
         }
 
-        // 💌 Отправка письма
+        // Отправка кода подтверждения на email
         binding.btnSendCode.setOnClickListener {
             if (isTimerRunning) {
                 Toast.makeText(this, "Подождите, прежде чем запросить новый код", Toast.LENGTH_SHORT).show()
@@ -65,7 +67,7 @@ class RegisterActivity : AppCompatActivity() {
             startCountdownTimer()
         }
 
-        // ✅ Регистрация
+        // Завершение регистрации
         binding.btnRegister.setOnClickListener {
             val username = binding.etUsername.text.toString().trim()
             val email = binding.etEmail.text.toString().trim()
@@ -107,27 +109,31 @@ class RegisterActivity : AppCompatActivity() {
             registerUser(email, password, username, phone)
         }
 
-        // 🔄 Переход на вход
+        // Переход к экрану входа
         binding.tvLogin.setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
         }
     }
 
-    // ---------- Username helpers ----------
+    // -------------------------------------------------------------------------
+    // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ИМЕНИ ПОЛЬЗОВАТЕЛЯ
+    // -------------------------------------------------------------------------
 
     private fun usernameKey(username: String): String =
         username.trim().lowercase()
 
     private fun isUsernameValid(username: String): Boolean {
         if (username.isBlank()) return false
-        // запрет любых пробелов/табов/переводов строк
+        // Запрет пробелов и других whitespace-символов
         if (username.any { it.isWhitespace() }) return false
         return true
     }
 
-    // ✅ Регистрация пользователя + уникальный ник
-    // ✅ Регистрация пользователя + уникальный ник (через транзакцию usernames/{key})
+    // -------------------------------------------------------------------------
+    // РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЯ С УНИКАЛЬНЫМ ИМЕНЕМ
+    // -------------------------------------------------------------------------
+
     private fun registerUser(email: String, password: String, username: String, phone: String) {
         val key = usernameKey(username)
 
@@ -152,7 +158,7 @@ class RegisterActivity : AppCompatActivity() {
                 val usernameRef = db.collection("usernames").document(key)
                 val now = System.currentTimeMillis()
 
-                // 1) Занимаем ник атомарно
+                // Атомарное занятие имени пользователя через транзакцию
                 db.runTransaction { tx ->
                     val snap = tx.get(usernameRef)
                     if (snap.exists()) {
@@ -162,13 +168,13 @@ class RegisterActivity : AppCompatActivity() {
                     true
                 }.addOnSuccessListener {
 
-                    // 2) displayName (не критично)
+                    // Обновление отображаемого имени в Firebase Auth
                     val profileUpdates = UserProfileChangeRequest.Builder()
                         .setDisplayName(username)
                         .build()
                     firebaseUser.updateProfile(profileUpdates)
 
-                    // 3) Пишем документы профиля
+                    // Создание документов профиля в Firestore
                     val userMap = hashMapOf(
                         "username" to username,
                         "email" to email,
@@ -204,14 +210,14 @@ class RegisterActivity : AppCompatActivity() {
                             showSuccessDialog()
                         }
                         .addOnFailureListener { e ->
-                            // откат: освобождаем ник и удаляем аккаунт
+                            // Откат: освобождение имени и удаление аккаунта при ошибке
                             usernameRef.delete()
                             firebaseUser.delete()
                             Toast.makeText(this, "Ошибка сохранения профиля: ${e.message}", Toast.LENGTH_SHORT).show()
                         }
 
                 }.addOnFailureListener { e ->
-                    // Ник занят / ошибка транзакции -> удаляем auth пользователя
+                    // Очистка при ошибке транзакции (имя занято или другая ошибка)
                     firebaseUser.delete()
                     val msg = if (e.message?.contains("Ник уже занят", true) == true)
                         "Ник уже занят. Выберите другой."
@@ -222,7 +228,10 @@ class RegisterActivity : AppCompatActivity() {
             }
     }
 
-    // 🎨 Красивое окно успешной регистрации
+    // -------------------------------------------------------------------------
+    // АНИМИРОВАННОЕ ОКНО УСПЕШНОЙ РЕГИСТРАЦИИ
+    // -------------------------------------------------------------------------
+
     private fun showSuccessDialog() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_success, null)
         val successIcon = dialogView.findViewById<ImageView>(R.id.ivSuccess)
@@ -262,7 +271,10 @@ class RegisterActivity : AppCompatActivity() {
         }, 2500)
     }
 
-    // 💌 Отправка письма
+    // -------------------------------------------------------------------------
+    // ОТПРАВКА ПИСЬМА ПОДТВЕРЖДЕНИЯ
+    // -------------------------------------------------------------------------
+
     private fun sendVerificationEmail(email: String, username: String, code: String) {
         val subject = "🎨 Verify your VColorAI account!"
         val message = """
@@ -293,7 +305,10 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
 
-    // ⏳ Таймер для кнопки отправки кода
+    // -------------------------------------------------------------------------
+    // ТАЙМЕР ОБРАТНОГО ОТСЧЕТА ДЛЯ ПОВТОРНОЙ ОТПРАВКИ КОДА
+    // -------------------------------------------------------------------------
+
     private fun startCountdownTimer() {
         isTimerRunning = true
         binding.btnSendCode.isEnabled = false
@@ -312,7 +327,10 @@ class RegisterActivity : AppCompatActivity() {
         }.start()
     }
 
-    // Проверки
+    // -------------------------------------------------------------------------
+    // ВАЛИДАЦИЯ ДАННЫХ
+    // -------------------------------------------------------------------------
+
     private fun isEmailValid(email: String): Boolean {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }

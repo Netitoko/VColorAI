@@ -8,16 +8,21 @@ import android.widget.CheckBox
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.vcolorai.R
-import com.example.vcolorai.model.SavedPalette
+import com.example.vcolorai.data.model.SavedPalette
 
+// Адаптер списка палитр
 class PalettesAdapter(
     private var items: List<SavedPalette>,
     private val onItemClickNormal: (SavedPalette) -> Unit
 ) : RecyclerView.Adapter<PalettesAdapter.PaletteViewHolder>() {
 
+    // Выбранные палитры
     private val selectedIds = mutableSetOf<String>()
+
+    // Режим множественного выбора
     private var selectionMode = false
 
+    // ViewHolder палитры
     inner class PaletteViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val colorViews: List<View> = listOf(
             itemView.findViewById(R.id.color1),
@@ -38,6 +43,7 @@ class PalettesAdapter(
     override fun onBindViewHolder(holder: PaletteViewHolder, position: Int) {
         val item = items[position]
 
+        // Подготовка цветов превью
         val colors = if (item.colors.size >= 4) {
             item.colors.take(4)
         } else {
@@ -54,15 +60,17 @@ class PalettesAdapter(
 
         colors.forEachIndexed { index, hex ->
             try {
-                holder.colorViews[index].setBackgroundColor(Color.parseColor(hex))
+                holder.colorViews[index]
+                    .setBackgroundColor(Color.parseColor(hex))
             } catch (_: Exception) {
-                holder.colorViews[index].setBackgroundColor(Color.parseColor("#CCCCCC"))
+                holder.colorViews[index]
+                    .setBackgroundColor(Color.parseColor("#CCCCCC"))
             }
         }
 
         holder.tvName.text = item.paletteName
 
-        // чекбокс и режим выбора
+        // Чекбокс и режим выбора
         if (selectionMode) {
             holder.cbSelect.visibility = View.VISIBLE
             holder.cbSelect.isChecked = selectedIds.contains(item.id)
@@ -87,13 +95,14 @@ class PalettesAdapter(
 
     override fun getItemCount(): Int = items.size
 
+    // Обновление списка
     fun submitList(newItems: List<SavedPalette>) {
         items = newItems
         selectedIds.clear()
         notifyDataSetChanged()
     }
 
-    // ---- Режим выбора ----
+    // Режим выбора
 
     fun setSelectionMode(enabled: Boolean) {
         selectionMode = enabled
@@ -105,6 +114,7 @@ class PalettesAdapter(
 
     fun isInSelectionMode(): Boolean = selectionMode
 
+    // Переключение выбора
     private fun toggleSelection(item: SavedPalette) {
         if (selectedIds.contains(item.id)) {
             selectedIds.remove(item.id)
@@ -114,9 +124,11 @@ class PalettesAdapter(
         notifyDataSetChanged()
     }
 
+    // Получение выбранных палитр
     fun getSelectedItems(): List<SavedPalette> =
         items.filter { selectedIds.contains(it.id) }
 
+    // Удаление по ID
     fun removeByIds(ids: List<String>) {
         if (ids.isEmpty()) return
         val mutable = items.toMutableList()
@@ -126,6 +138,7 @@ class PalettesAdapter(
         notifyDataSetChanged()
     }
 
+    // Обновление палитры
     fun updateItem(id: String, newName: String, newTags: List<String>) {
         val index = items.indexOfFirst { it.id == id }
         if (index == -1) return

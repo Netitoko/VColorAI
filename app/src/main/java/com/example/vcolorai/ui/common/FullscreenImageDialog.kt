@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import com.bumptech.glide.Glide
 import io.getstream.photoview.PhotoView
 
+// Полноэкранный просмотр изображения
 class FullscreenImageDialog(
     context: Context,
     private val image: Any
@@ -23,7 +24,7 @@ class FullscreenImageDialog(
             )
             setBackgroundColor(Color.BLACK)
 
-            // hero-like анимация появления
+            // Анимация появления
             alpha = 0f
             scaleX = 0.92f
             scaleY = 0.92f
@@ -39,7 +40,7 @@ class FullscreenImageDialog(
             .load(image)
             .into(photoView)
 
-        // Тап — закрыть с анимацией
+        // Тап для закрытия
         photoView.setOnClickListener {
             photoView.animate()
                 .alpha(0f)

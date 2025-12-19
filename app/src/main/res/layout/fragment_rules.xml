@@ -23,11 +23,11 @@
     <ImageButton
         android:id="@+id/btnCloseRules"
         android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="top|end"
         android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Закрыть правила"
         android:src="@drawable/ic_close"
-        android:tint="?attr/colorOnSurface"
-        android:contentDescription="Закрыть правила" />
+        android:tint="?attr/colorOnSurface" />
 
 </FrameLayout>

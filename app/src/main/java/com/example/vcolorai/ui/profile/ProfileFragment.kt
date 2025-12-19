@@ -1,4 +1,4 @@
-package com.example.vcolorai.ui
+package com.example.vcolorai.ui.profile
 
 import android.content.Intent
 import android.os.Bundle
@@ -19,8 +19,6 @@ import com.example.vcolorai.ui.feed.PublicFeedAdapter
 import com.example.vcolorai.ui.feed.PublicFeedItem
 import com.example.vcolorai.ui.notifications.NotificationItem
 import com.example.vcolorai.ui.notifications.NotificationsAdapter
-import com.example.vcolorai.ui.profile.EditProfileDialogFragment
-import com.example.vcolorai.ui.profile.PublicUserProfileBottomSheet
 import com.example.vcolorai.ui.settings.SettingsFragment
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
@@ -28,6 +26,9 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import com.example.vcolorai.ui.common.VoteManager
+import com.example.vcolorai.ui.settings.EditProfileDialogFragment
+
 
 class ProfileFragment : BaseFragment() {
 
@@ -40,28 +41,46 @@ class ProfileFragment : BaseFragment() {
     private var currentAvatarUrl: String? = null
     private var currentUsername: String = "User"
 
-    // ---------------- Notifications ----------------
+    // -------------------------------------------------------------------------
+    // СИСТЕМА УВЕДОМЛЕНИЙ
+    // -------------------------------------------------------------------------
+
     private lateinit var notificationsAdapter: NotificationsAdapter
     private var notifications: List<NotificationItem> = emptyList()
     private var notificationsListener: ListenerRegistration? = null
 
-    // ---------------- Palettes (as Feed) ----------------
+    // -------------------------------------------------------------------------
+    // ПУБЛИЧНЫЕ ПАЛИТРЫ ПОЛЬЗОВАТЕЛЯ
+    // -------------------------------------------------------------------------
+
     private lateinit var feedAdapter: PublicFeedAdapter
     private var myPublicFeedItems: List<PublicFeedItem> = emptyList()
     private var myPalettesListener: ListenerRegistration? = null
 
-    // ---------------- Likes tab ----------------
+    // -------------------------------------------------------------------------
+    // ПОНРАВИВШИЕСЯ ПАЛИТРЫ
+    // -------------------------------------------------------------------------
+
     private var likedFeedItems: List<PublicFeedItem> = emptyList()
     private var likedListener: ListenerRegistration? = null
 
-    // ---------------- Counters listeners ----------------
+    // -------------------------------------------------------------------------
+    // СЧЕТЧИКИ ПОДПИСЧИКОВ И ПОДПИСОК
+    // -------------------------------------------------------------------------
+
     private var followersCountListener: ListenerRegistration? = null
     private var followingCountListener: ListenerRegistration? = null
 
-    // ✅ NEW: лайки в шапке — realtime listener (чтобы не инвертировалось)
+    // -------------------------------------------------------------------------
+    // СУММА ЛАЙКОВ НА ПУБЛИЧНЫХ ПАЛИТРАХ (REALTIME)
+    // -------------------------------------------------------------------------
+
     private var likesSumListener: ListenerRegistration? = null
 
-    // 0-notifs, 1-my palettes, 2-likes
+    // -------------------------------------------------------------------------
+    // ТЕКУЩАЯ ВКЛАДКА (0-уведомления, 1-мои палитры, 2-лайки)
+    // -------------------------------------------------------------------------
+
     private var selectedTab = 0
 
     private enum class FollowListMode { FOLLOWERS, FOLLOWING }
@@ -91,6 +110,10 @@ class ProfileFragment : BaseFragment() {
         return binding.root
     }
 
+    // -------------------------------------------------------------------------
+    // АДАПТАЦИЯ ПОД СИСТЕМНЫЕ ОТСТУПЫ
+    // -------------------------------------------------------------------------
+
     override fun applyInsets(root: View) {
         val baseTop = binding.rootProfile.paddingTop
 
@@ -102,7 +125,9 @@ class ProfileFragment : BaseFragment() {
         }
     }
 
-    // -------------------- Header --------------------
+    // -------------------------------------------------------------------------
+    // ЗАГРУЗКА ЗАГОЛОВКА ПРОФИЛЯ
+    // -------------------------------------------------------------------------
 
     private fun loadProfileHeader() {
         val user = auth.currentUser ?: run {
@@ -142,7 +167,9 @@ class ProfileFragment : BaseFragment() {
             }
     }
 
-    // -------------------- Counters (REALTIME) --------------------
+    // -------------------------------------------------------------------------
+    // REAL-TIME СЧЕТЧИКИ ПОДПИСЧИКОВ И ПОДПИСОК
+    // -------------------------------------------------------------------------
 
     private fun loadCountersRealtime() {
         val user = auth.currentUser ?: return
@@ -170,7 +197,7 @@ class ProfileFragment : BaseFragment() {
                 binding.tvFollowingCount.text = (snap?.size() ?: 0).toString()
             }
 
-        // ✅ FIX: лайки в шапке = realtime сумма likesCount твоих публичных палитр
+        // Real-time сумма лайков на публичных палитрах пользователя
         likesSumListener?.remove()
         likesSumListener = db.collection("color_palettes")
             .whereEqualTo("userId", uid)
@@ -185,7 +212,9 @@ class ProfileFragment : BaseFragment() {
             }
     }
 
-    // -------------------- Followers / Following (dialogs) --------------------
+    // -------------------------------------------------------------------------
+    // ДИАЛОГИ СПИСКОВ ПОДПИСЧИКОВ И ПОДПИСОК
+    // -------------------------------------------------------------------------
 
     private fun setupFollowersFollowingClicks() {
         binding.tvFollowersCount.setOnClickListener { showFollowersListDialog() }
@@ -350,7 +379,9 @@ class ProfileFragment : BaseFragment() {
             }
     }
 
-    // -------------------- Buttons --------------------
+    // -------------------------------------------------------------------------
+    // ДЕЙСТВИЯ ПРОФИЛЯ (РЕДАКТИРОВАНИЕ, ШАРИНГ, НАСТРОЙКИ)
+    // -------------------------------------------------------------------------
 
     private fun setupActions() {
         binding.btnEditProfile.setOnClickListener {
@@ -377,6 +408,7 @@ class ProfileFragment : BaseFragment() {
         }
     }
 
+    // Обработчик обновления профиля после редактирования
     private fun setupResultListener() {
         parentFragmentManager.setFragmentResultListener(
             "profile_updated",
@@ -397,7 +429,9 @@ class ProfileFragment : BaseFragment() {
         }
     }
 
-    // -------------------- Notifications --------------------
+    // -------------------------------------------------------------------------
+    // НАСТРОЙКА СИСТЕМЫ УВЕДОМЛЕНИЙ
+    // -------------------------------------------------------------------------
 
     private fun setupNotificationsList() {
         notificationsAdapter = NotificationsAdapter { notif -> markNotificationAsRead(notif) }
@@ -453,17 +487,18 @@ class ProfileFragment : BaseFragment() {
             .update("isRead", true)
     }
 
-    // -------------------- Feed list (My palettes + Likes use same RV) --------------------
+    // -------------------------------------------------------------------------
+    // НАСТРОЙКА СПИСКА ПАЛИТР
+    // -------------------------------------------------------------------------
 
     private fun setupFeedList() {
         feedAdapter = PublicFeedAdapter(
             items = emptyList(),
-            onSaveToMyPalettes = { /* в профиле не используем */ },
+            onSaveToMyPalettes = { },
             onSharePalette = { item -> sharePalette(item) },
             onLike = { item -> handleVote(item, isLike = true) },
             onDislike = { item -> handleVote(item, isLike = false) },
             onAuthorClick = { authorId ->
-                // ✅ в Лайках автор = другой пользователь
                 if (!authorId.isNullOrBlank()) {
                     PublicUserProfileBottomSheet.newInstance(authorId)
                         .show(parentFragmentManager, "public_user_sheet")
@@ -475,7 +510,9 @@ class ProfileFragment : BaseFragment() {
         binding.rvMyPublicPalettes.adapter = feedAdapter
     }
 
-    // -------------------- My public palettes --------------------
+    // -------------------------------------------------------------------------
+    // ЗАГРУЗКА ПУБЛИЧНЫХ ПАЛИТР ПОЛЬЗОВАТЕЛЯ
+    // -------------------------------------------------------------------------
 
     private fun loadMyPublicPalettesRealtimeAsFeed() {
         val user = auth.currentUser ?: run {
@@ -525,7 +562,9 @@ class ProfileFragment : BaseFragment() {
             }
     }
 
-    // -------------------- Likes tab (users/{me}/liked_palettes index) --------------------
+    // -------------------------------------------------------------------------
+    // ЗАГРУЗКА ПОНРАВИВШИХСЯ ПАЛИТР
+    // -------------------------------------------------------------------------
 
     private fun loadLikedPalettesRealtime() {
         val me = auth.currentUser ?: run {
@@ -556,7 +595,6 @@ class ProfileFragment : BaseFragment() {
                     return@addSnapshotListener
                 }
 
-                // 1) грузим палитры по id
                 val paletteTasks = paletteIds.map { pid ->
                     db.collection("color_palettes").document(pid).get()
                         .continueWith { t ->
@@ -574,7 +612,7 @@ class ProfileFragment : BaseFragment() {
                                 paletteName = doc.getString("paletteName") ?: "",
                                 colors = colors,
                                 authorId = authorId,
-                                authorName = "", // заполним ниже из public_users
+                                authorName = "",
                                 description = doc.getString("promptText") ?: "",
                                 tags = tags,
                                 likesCount = doc.getLong("likesCount") ?: 0L,
@@ -590,11 +628,8 @@ class ProfileFragment : BaseFragment() {
                     .addOnSuccessListener { maybeItems ->
                         val raw = maybeItems.filterNotNull()
 
-                        // 2) подтягиваем голоса текущего пользователя (для состояния кнопок)
                         fillVotesForCurrentUser(raw) { withVotes ->
-                            // 3) подтягиваем имена авторов из public_users
                             fillAuthors(withVotes) { withAuthors ->
-                                // сохраняем порядок как в liked_palettes (createdAt DESC)
                                 val byId = withAuthors.associateBy { it.id }
                                 likedFeedItems = paletteIds.mapNotNull { byId[it] }
                                 renderTabContent()
@@ -609,6 +644,7 @@ class ProfileFragment : BaseFragment() {
             }
     }
 
+    // Заполнение имен авторов для списка палитр
     private fun fillAuthors(
         items: List<PublicFeedItem>,
         onDone: (List<PublicFeedItem>) -> Unit
@@ -637,7 +673,9 @@ class ProfileFragment : BaseFragment() {
             }
     }
 
-    // -------------------- Votes (AND liked_palettes index) --------------------
+    // -------------------------------------------------------------------------
+    // СИСТЕМА ГОЛОСОВАНИЯ И ЛАЙКОВ
+    // -------------------------------------------------------------------------
 
     private fun fillVotesForCurrentUser(
         items: List<PublicFeedItem>,
@@ -667,74 +705,51 @@ class ProfileFragment : BaseFragment() {
         val uid = user.uid
         val now = System.currentTimeMillis()
 
-        val paletteRef = db.collection("color_palettes").document(item.id)
-        val voteRef = paletteRef.collection("votes").document(uid)
-
-        // ✅ индекс лайков (для вкладки Лайки)
         val likedRef = db.collection("users")
             .document(uid)
             .collection("liked_palettes")
             .document(item.id)
 
-        db.runTransaction { tx ->
-            val paletteSnap = tx.get(paletteRef)
+        VoteManager.vote(
+            db = db,
+            auth = auth,
+            paletteId = item.id,
+            paletteName = item.paletteName,
+            isLike = isLike,
+            onSuccess = { res ->
+                myPublicFeedItems = myPublicFeedItems.map { old ->
+                    if (old.id == item.id) old.copy(
+                        likesCount = res.likes,
+                        dislikesCount = res.dislikes,
+                        currentUserVote = res.userVote
+                    ) else old
+                }
 
-            val likes = paletteSnap.getLong("likesCount") ?: 0L
-            val dislikes = paletteSnap.getLong("dislikesCount") ?: 0L
+                likedFeedItems = likedFeedItems.map { old ->
+                    if (old.id == item.id) old.copy(
+                        likesCount = res.likes,
+                        dislikesCount = res.dislikes,
+                        currentUserVote = res.userVote
+                    ) else old
+                }
 
-            val prevVote = tx.get(voteRef).getLong("value")?.toInt() ?: 0
-            val target = if (isLike) 1 else -1
+                renderTabContent()
 
-            val (newLikes, newDislikes, newVote) = when (prevVote) {
-                target -> if (target == 1) Triple(likes - 1, dislikes, 0) else Triple(likes, dislikes - 1, 0)
-                1, -1 -> if (target == 1) Triple(likes + 1, dislikes - 1, 1) else Triple(likes - 1, dislikes + 1, -1)
-                else -> if (target == 1) Triple(likes + 1, dislikes, 1) else Triple(likes, dislikes + 1, -1)
+                if (res.userVote == 1) {
+                    likedRef.set(mapOf("createdAt" to now))
+                } else {
+                    likedRef.delete()
+                }
+            },
+            onError = { e ->
+                Log.e("PROFILE", "Vote error", e)
             }
-
-            tx.update(paletteRef, mapOf("likesCount" to newLikes, "dislikesCount" to newDislikes))
-            if (newVote == 0) tx.delete(voteRef) else tx.set(voteRef, mapOf("value" to newVote))
-
-            // ✅ синхронизируем индекс liked_palettes
-            if (newVote == 1) {
-                tx.set(likedRef, mapOf("createdAt" to now))
-            } else {
-                tx.delete(likedRef)
-            }
-
-            VoteResult(newLikes, newDislikes, newVote)
-        }.addOnSuccessListener { result ->
-            // обновляем список "Мои палитры" и "Лайки" локально (чтобы UI реагировал без задержек)
-            myPublicFeedItems = myPublicFeedItems.map { old ->
-                if (old.id == item.id) old.copy(
-                    likesCount = result.likes,
-                    dislikesCount = result.dislikes,
-                    currentUserVote = result.userVote
-                ) else old
-            }
-            likedFeedItems = likedFeedItems.map { old ->
-                if (old.id == item.id) old.copy(
-                    likesCount = result.likes,
-                    dislikesCount = result.dislikes,
-                    currentUserVote = result.userVote
-                ) else old
-            }
-
-            renderTabContent()
-
-            // ✅ FIX: НЕ пересчитываем лайки вручную.
-            // tvLikesCount обновляется realtime listener'ом (likesSumListener)
-        }.addOnFailureListener { e ->
-            Log.e("PROFILE", "Vote error", e)
-        }
+        )
     }
 
-    private data class VoteResult(
-        val likes: Long,
-        val dislikes: Long,
-        val userVote: Int
-    )
-
-    // -------------------- Sharing --------------------
+    // -------------------------------------------------------------------------
+    // ПОДЕЛИТЬСЯ ПАЛИТРОЙ
+    // -------------------------------------------------------------------------
 
     private fun sharePalette(item: PublicFeedItem) {
         val text = buildString {
@@ -754,7 +769,9 @@ class ProfileFragment : BaseFragment() {
         startActivity(Intent.createChooser(intent, "Поделиться палитрой"))
     }
 
-    // -------------------- Tabs --------------------
+    // -------------------------------------------------------------------------
+    // СИСТЕМА ВКЛАДОК ПРОФИЛЯ
+    // -------------------------------------------------------------------------
 
     private fun setupTabs() {
         fun select(tab: Int) {

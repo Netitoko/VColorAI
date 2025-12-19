@@ -29,20 +29,25 @@ class PublicUserProfileBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
+    // Firebase
     private val db by lazy { FirebaseFirestore.getInstance() }
     private val auth by lazy { FirebaseAuth.getInstance() }
 
+    // ID просматриваемого пользователя
     private val userId: String by lazy { arguments?.getString(ARG_USER_ID).orEmpty() }
 
+    // Realtime listeners
     private var profileListener: ListenerRegistration? = null
     private var followStateListener: ListenerRegistration? = null
 
+    // UI
     private var ivAvatar: ImageView? = null
     private var tvUsername: TextView? = null
     private var btnSubscribe: Button? = null
     private var btnGoToProfile: Button? = null
     private var btnClose: ImageButton? = null
 
+    // Текущее состояние подписки
     private var isSubscribed = false
 
     override fun onCreateView(
@@ -50,7 +55,12 @@ class PublicUserProfileBottomSheet : BottomSheetDialogFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val view = inflater.inflate(R.layout.bottom_sheet_public_user_profile, container, false)
+        val view =
+            inflater.inflate(
+                R.layout.bottom_sheet_public_user_profile,
+                container,
+                false
+            )
 
         ivAvatar = view.findViewById(R.id.ivAvatar)
         tvUsername = view.findViewById(R.id.tvUsername)
@@ -66,7 +76,10 @@ class PublicUserProfileBottomSheet : BottomSheetDialogFragment() {
         btnGoToProfile?.setOnClickListener {
             if (userId.isBlank()) return@setOnClickListener
             parentFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, PublicUserProfileFragment.newInstance(userId))
+                .replace(
+                    R.id.fragmentContainer,
+                    PublicUserProfileFragment.newInstance(userId)
+                )
                 .addToBackStack("public_user_profile")
                 .commit()
             dismiss()
@@ -80,40 +93,50 @@ class PublicUserProfileBottomSheet : BottomSheetDialogFragment() {
         return view
     }
 
+    // Подписка на публичный профиль пользователя
     private fun bindPublicUser() {
         if (userId.isBlank()) return
 
         profileListener?.remove()
-        profileListener = db.collection("public_users")
-            .document(userId)
-            .addSnapshotListener { snap, e ->
-                if (e != null || snap == null) {
-                    Log.e("PUB_SHEET", "public_users load error", e)
-                    tvUsername?.text = "User"
-                    ivAvatar?.setImageResource(R.mipmap.ic_launcher_round)
-                    return@addSnapshotListener
+        profileListener =
+            db.collection("public_users")
+                .document(userId)
+                .addSnapshotListener { snap, e ->
+                    if (e != null || snap == null) {
+                        Log.e("PUB_SHEET", "public_users load error", e)
+                        tvUsername?.text = "User"
+                        ivAvatar?.setImageResource(R.mipmap.ic_launcher_round)
+                        return@addSnapshotListener
+                    }
+
+                    val username =
+                        snap.getString("username")
+                            ?.trim()
+                            .orEmpty()
+                            .ifBlank { "User" }
+
+                    val avatarUrl =
+                        snap.getString("avatarUrl")
+                            ?.trim()
+                            .orEmpty()
+
+                    tvUsername?.text = username
+
+                    val iv = ivAvatar ?: return@addSnapshotListener
+                    if (avatarUrl.isNotBlank() && avatarUrl != "default_gray") {
+                        Glide.with(this)
+                            .load(avatarUrl)
+                            .placeholder(R.mipmap.ic_launcher_round)
+                            .error(R.mipmap.ic_launcher_round)
+                            .circleCrop()
+                            .into(iv)
+                    } else {
+                        iv.setImageResource(R.mipmap.ic_launcher_round)
+                    }
                 }
-
-                val username = snap.getString("username")?.trim().orEmpty().ifBlank { "User" }
-                val avatarUrl = snap.getString("avatarUrl")?.trim().orEmpty()
-
-                tvUsername?.text = username
-
-                val iv = ivAvatar ?: return@addSnapshotListener
-                if (avatarUrl.isNotBlank() && avatarUrl != "default_gray") {
-                    Glide.with(this)
-                        .load(avatarUrl)
-                        .placeholder(R.mipmap.ic_launcher_round)
-                        .error(R.mipmap.ic_launcher_round)
-                        .circleCrop()
-                        .into(iv)
-                } else {
-                    iv.setImageResource(R.mipmap.ic_launcher_round)
-                }
-            }
     }
 
-    // ✅ SOURCE OF TRUTH = users/{me}/following/{userId}
+    // Состояние подписки (users/{me}/following/{userId})
     private fun bindSubscribeStateRealtime() {
         val me = auth.currentUser?.uid
         if (me.isNullOrBlank()) {
@@ -128,20 +151,22 @@ class PublicUserProfileBottomSheet : BottomSheetDialogFragment() {
         }
 
         followStateListener?.remove()
-        followStateListener = db.collection("users")
-            .document(me)
-            .collection("following")
-            .document(userId)
-            .addSnapshotListener { snap, e ->
-                if (e != null) {
-                    Log.e("PUB_SHEET", "follow state error", e)
-                    return@addSnapshotListener
+        followStateListener =
+            db.collection("users")
+                .document(me)
+                .collection("following")
+                .document(userId)
+                .addSnapshotListener { snap, e ->
+                    if (e != null) {
+                        Log.e("PUB_SHEET", "follow state error", e)
+                        return@addSnapshotListener
+                    }
+                    isSubscribed = snap?.exists() == true
+                    renderSubscribeButton()
                 }
-                isSubscribed = snap?.exists() == true
-                renderSubscribeButton()
-            }
     }
 
+    // Обновление кнопки подписки
     private fun renderSubscribeButton() {
         val me = auth.currentUser?.uid
 
@@ -151,7 +176,11 @@ class PublicUserProfileBottomSheet : BottomSheetDialogFragment() {
             btnSubscribe?.isEnabled = true
             btnSubscribe?.alpha = 1f
             btnSubscribe?.setOnClickListener {
-                Toast.makeText(requireContext(), "Войдите в аккаунт, чтобы подписаться", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    "Войдите в аккаунт, чтобы подписаться",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
             return
         }
@@ -164,28 +193,37 @@ class PublicUserProfileBottomSheet : BottomSheetDialogFragment() {
         btnSubscribe?.visibility = View.VISIBLE
         btnSubscribe?.isEnabled = true
         btnSubscribe?.alpha = 1f
-        btnSubscribe?.text = if (isSubscribed) "Отписаться" else "Подписаться"
+        btnSubscribe?.text =
+            if (isSubscribed) "Отписаться" else "Подписаться"
+
         btnSubscribe?.setOnClickListener { toggleSubscribe() }
     }
 
+    // Подписка / отписка
     private fun toggleSubscribe() {
         val me = auth.currentUser?.uid ?: run {
-            Toast.makeText(requireContext(), "Нет авторизации", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                "Нет авторизации",
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
         if (userId.isBlank() || userId == me) return
 
         val now = System.currentTimeMillis()
 
-        val followingRef = db.collection("users")
-            .document(me)
-            .collection("following")
-            .document(userId)
+        val followingRef =
+            db.collection("users")
+                .document(me)
+                .collection("following")
+                .document(userId)
 
-        val followerRef = db.collection("users")
-            .document(userId)
-            .collection("followers")
-            .document(me)
+        val followerRef =
+            db.collection("users")
+                .document(userId)
+                .collection("followers")
+                .document(me)
 
         val batch = db.batch()
         if (isSubscribed) {
@@ -201,7 +239,6 @@ class PublicUserProfileBottomSheet : BottomSheetDialogFragment() {
 
         batch.commit()
             .addOnSuccessListener {
-                // состояние обновит listener
                 btnSubscribe?.isEnabled = true
                 btnSubscribe?.alpha = 1f
             }
@@ -209,7 +246,11 @@ class PublicUserProfileBottomSheet : BottomSheetDialogFragment() {
                 Log.e("PUB_SHEET", "toggle subscribe error", e)
                 btnSubscribe?.isEnabled = true
                 btnSubscribe?.alpha = 1f
-                Toast.makeText(requireContext(), "Ошибка: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    "Ошибка: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
     }
 

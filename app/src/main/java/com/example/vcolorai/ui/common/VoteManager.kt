@@ -4,8 +4,10 @@ import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
+// Управление лайками и дизлайками
 object VoteManager {
 
+    // Результат голосования
     data class VoteResult(
         val likes: Long,
         val dislikes: Long,
@@ -13,12 +15,7 @@ object VoteManager {
         val ownerId: String
     )
 
-    /**
-     * Универсальный лайк/дизлайк:
-     * - транзакция по palette + votes/{uid}
-     * - ✅ синхронизация users/{uid}/liked_palettes/{paletteId}
-     * - уведомление владельцу (если owner != voter и newVote != 0)
-     */
+    // Лайк / дизлайк палитры
     fun vote(
         db: FirebaseFirestore,
         auth: FirebaseAuth,
@@ -35,7 +32,7 @@ object VoteManager {
         val paletteRef = db.collection("color_palettes").document(paletteId)
         val voteRef = paletteRef.collection("votes").document(uid)
 
-        // ✅ индекс лайков для вкладки "Лайки"
+        // Индекс лайков пользователя
         val likedRef = db.collection("users")
             .document(uid)
             .collection("liked_palettes")
@@ -60,16 +57,27 @@ object VoteManager {
                     if (target == 1) Triple(likes + 1, dislikes - 1, 1)
                     else Triple(likes - 1, dislikes + 1, -1)
                 }
-                else -> { // 0 -> лайк/дизлайк
+                else -> { // первый голос
                     if (target == 1) Triple(likes + 1, dislikes, 1)
                     else Triple(likes, dislikes + 1, -1)
                 }
             }
 
-            tx.update(paletteRef, mapOf("likesCount" to newLikes, "dislikesCount" to newDislikes))
-            if (newVote == 0) tx.delete(voteRef) else tx.set(voteRef, mapOf("value" to newVote))
+            tx.update(
+                paletteRef,
+                mapOf(
+                    "likesCount" to newLikes,
+                    "dislikesCount" to newDislikes
+                )
+            )
 
-            // ✅ синхронизируем liked_palettes
+            if (newVote == 0) {
+                tx.delete(voteRef)
+            } else {
+                tx.set(voteRef, mapOf("value" to newVote))
+            }
+
+            // Синхронизация liked_palettes
             if (newVote == 1) {
                 tx.set(likedRef, mapOf("createdAt" to now))
             } else {
@@ -77,24 +85,31 @@ object VoteManager {
             }
 
             VoteResult(newLikes, newDislikes, newVote, ownerId)
-        }.addOnSuccessListener { result ->
-            // уведомление владельцу (не себе и только если голос не 0)
-            if (result.userVote != 0 && result.ownerId.isNotBlank() && result.ownerId != uid) {
-                createOrUpdateVoteNotification(
-                    db = db,
-                    voterUid = uid,
-                    ownerUid = result.ownerId,
-                    paletteId = paletteId,
-                    paletteName = paletteName,
-                    userVote = result.userVote
-                )
-            }
-            onSuccess(result)
-        }.addOnFailureListener { e ->
-            onError(e)
         }
+            .addOnSuccessListener { result ->
+                // Уведомление владельцу (не себе и только если есть голос)
+                if (
+                    result.userVote != 0 &&
+                    result.ownerId.isNotBlank() &&
+                    result.ownerId != uid
+                ) {
+                    createOrUpdateVoteNotification(
+                        db = db,
+                        voterUid = uid,
+                        ownerUid = result.ownerId,
+                        paletteId = paletteId,
+                        paletteName = paletteName,
+                        userVote = result.userVote
+                    )
+                }
+                onSuccess(result)
+            }
+            .addOnFailureListener { e ->
+                onError(e)
+            }
     }
 
+    // Создание уведомления о голосе
     private fun createOrUpdateVoteNotification(
         db: FirebaseFirestore,
         voterUid: String,
@@ -103,12 +118,20 @@ object VoteManager {
         paletteName: String,
         userVote: Int
     ) {
-        db.collection("public_users").document(voterUid).get()
+        db.collection("public_users")
+            .document(voterUid)
+            .get()
             .addOnSuccessListener { doc ->
-                val username = doc.getString("username")?.trim().takeUnless { it.isNullOrBlank() } ?: "Пользователь"
+                val username =
+                    doc.getString("username")
+                        ?.trim()
+                        .takeUnless { it.isNullOrBlank() }
+                        ?: "Пользователь"
+
                 val type = if (userVote == 1) "LIKE" else "DISLIKE"
                 val title = if (type == "LIKE") "Новый лайк" else "Новый дизлайк"
-                val message = "$username ${if (type == "LIKE") "поставил(а) лайк" else "поставил(а) дизлайк"} вашей палитре: $paletteName"
+                val message =
+                    "$username ${if (type == "LIKE") "поставил(а) лайк" else "поставил(а) дизлайк"} вашей палитре: $paletteName"
 
                 val notifId = "vote_${paletteId}_${voterUid}"
 

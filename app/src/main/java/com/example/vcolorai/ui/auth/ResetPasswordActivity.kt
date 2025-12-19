@@ -1,4 +1,4 @@
-package com.example.vcolorai
+package com.example.vcolorai.ui.auth
 
 import android.content.Intent
 import android.net.Uri
@@ -24,7 +24,7 @@ class ResetPasswordActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ✅ как в BaseFragment: edge-to-edge
+        // Режим edge-to-edge (без отступов системных баров)
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         binding = ActivityResetPasswordBinding.inflate(layoutInflater)
@@ -32,10 +32,10 @@ class ResetPasswordActivity : AppCompatActivity() {
 
         applyInsets()
 
-        // 1) если открыли ссылкой — попробуем распарсить
+        // Обработка входящей ссылки (при открытии из email)
         handleIncomingUri(intent.data)
 
-        // 2) ручной режим: вставить ссылку
+        // Ручной режим: вставка ссылки из письма
         binding.btnParseLink.setOnClickListener {
             val raw = binding.etLink.text.toString().trim()
             if (raw.isBlank()) {
@@ -46,12 +46,14 @@ class ResetPasswordActivity : AppCompatActivity() {
             handleIncomingUri(uri)
         }
 
+        // Валидация пароля в реальном времени
         binding.etNewPassword.addTextChangedListener {
             updatePasswordRequirements(it?.toString().orEmpty())
             updateConfirmEnabled()
         }
         binding.etConfirmPassword.addTextChangedListener { updateConfirmEnabled() }
 
+        // Подтверждение смены пароля
         binding.btnConfirm.setOnClickListener {
             val code = oobCode
             if (code.isNullOrBlank()) {
@@ -85,6 +87,7 @@ class ResetPasswordActivity : AppCompatActivity() {
                 }
         }
 
+        // Возврат к экрану входа
         binding.btnBackToLogin.setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
@@ -97,8 +100,11 @@ class ResetPasswordActivity : AppCompatActivity() {
         handleIncomingUri(intent.data)
     }
 
+    // -------------------------------------------------------------------------
+    // АДАПТАЦИЯ ПОД СИСТЕМНЫЕ ОТСТУПЫ (EDGE-TO-EDGE)
+    // -------------------------------------------------------------------------
+
     private fun applyInsets() {
-        // ✅ сохраняем исходные паддинги (как в BaseFragment)
         val initialTop = binding.root.paddingTop
         val initialBottom = binding.root.paddingBottom
         val initialLeft = binding.root.paddingLeft
@@ -118,6 +124,10 @@ class ResetPasswordActivity : AppCompatActivity() {
             insets
         }
     }
+
+    // -------------------------------------------------------------------------
+    // ОБРАБОТКА ВХОДЯЩЕЙ ССЫЛКИ СБРОСА ПАРОЛЯ
+    // -------------------------------------------------------------------------
 
     private fun handleIncomingUri(data: Uri?) {
         binding.tvDebugLink.text = data?.toString() ?: "Вставь ссылку из письма ниже"
@@ -145,11 +155,12 @@ class ResetPasswordActivity : AppCompatActivity() {
             }
     }
 
+    // Извлечение Firebase action URI из различных форматов ссылок
     private fun extractFirebaseActionUri(original: Uri?): Uri? {
         if (original == null) return null
         val path = original.path ?: ""
 
-        // твой реальный формат: /__/auth/links?link=...
+        // Формат: /__/auth/links?link=...
         if (path.startsWith("/__/auth/links")) {
             val inner = original.getQueryParameter("link") ?: return null
             return runCatching { Uri.parse(inner) }.getOrNull()
@@ -161,6 +172,10 @@ class ResetPasswordActivity : AppCompatActivity() {
 
         return null
     }
+
+    // -------------------------------------------------------------------------
+    // УПРАВЛЕНИЕ СОСТОЯНИЕМ ФОРМЫ
+    // -------------------------------------------------------------------------
 
     private fun setFormEnabled(enabled: Boolean) {
         binding.etNewPassword.isEnabled = enabled
@@ -186,12 +201,17 @@ class ResetPasswordActivity : AppCompatActivity() {
         return codeOk && pass.isNotBlank() && confirm.isNotBlank() && pass == confirm && isPasswordStrongLikeRegister(pass)
     }
 
+    // -------------------------------------------------------------------------
+    // ПРОВЕРКА СЛОЖНОСТИ ПАРОЛЯ
+    // -------------------------------------------------------------------------
+
     private fun isPasswordStrongLikeRegister(password: String): Boolean {
         val pattern =
             Regex("^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%^&*()_+=\\-{}\\[\\]:;\"'<>,?/]).{6,}\$")
         return password.matches(pattern)
     }
 
+    // Визуальная индикация требований к паролю
     private fun updatePasswordRequirements(password: String) {
         val ok = 0xFF00C853.toInt()
         val gray = 0xFF888888.toInt()
@@ -203,6 +223,10 @@ class ResetPasswordActivity : AppCompatActivity() {
         val specials = "!@#\$%^&*()_+=-{}[]:;\"'<>,.?/"
         binding.tvReqSpecial.setTextColor(if (password.any { specials.contains(it) }) ok else gray)
     }
+
+    // -------------------------------------------------------------------------
+    // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
+    // -------------------------------------------------------------------------
 
     private fun toast(msg: String, long: Boolean = false) {
         Toast.makeText(this, msg, if (long) Toast.LENGTH_LONG else Toast.LENGTH_SHORT).show()

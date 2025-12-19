@@ -25,8 +25,8 @@ object EmailSender {
                 val session = Session.getInstance(props, object : Authenticator() {
                     override fun getPasswordAuthentication(): PasswordAuthentication {
                         return PasswordAuthentication(
-                            "vincentcolorai@gmail.com", // <-- сюда Gmail
-                            "qqoz tpkf eoam xceg"   // <-- сюда 16-значный пароль приложения
+                            "vincentcolorai@gmail.com", // Учетные данные Gmail аккаунта
+                            "qqoz tpkf eoam xceg"      // Пароль приложения (App Password)
                         )
                     }
                 })

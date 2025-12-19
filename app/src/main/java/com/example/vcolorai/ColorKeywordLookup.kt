@@ -8,8 +8,9 @@ object ColorKeywordLookup {
 
     private val colorMap = mutableMapOf<String, String>()
 
+    // Загрузка словаря соответствий ключевых слов и цветов из JSON-файла
     fun load(context: Context) {
-        if (colorMap.isNotEmpty()) return // уже загружено
+        if (colorMap.isNotEmpty()) return // Словарь уже загружен
 
         try {
             val inputStream = context.assets.open("color_keywords.json")
@@ -27,6 +28,7 @@ object ColorKeywordLookup {
         }
     }
 
+    // Поиск цветов по ключевым словам из текстового запроса
     fun findColors(words: List<String>): List<Int> {
         return words.mapNotNull { colorMap[it.lowercase()]?.let { hex -> android.graphics.Color.parseColor(hex) } }
     }

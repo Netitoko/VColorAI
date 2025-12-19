@@ -31,6 +31,7 @@ class UserStatsDialogFragment : DialogFragment() {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
+    // Вспомогательная структура для хранения данных палитры
     private data class PaletteDoc(
         val isPublic: Boolean,
         val likes: Int,
@@ -53,6 +54,7 @@ class UserStatsDialogFragment : DialogFragment() {
         return dialog
     }
 
+    // Загрузка статистики пользователя из Firestore
     private fun loadStats() {
         val user = auth.currentUser
         if (user == null) {
@@ -100,7 +102,7 @@ class UserStatsDialogFragment : DialogFragment() {
                     dislikesTotal = dislikesTotal
                 )
 
-                // ✅ только 7 дней
+                // Визуализация графика активности за последние 7 дней
                 renderDailyChart7()
 
                 binding.progress.visibility = View.GONE
@@ -112,7 +114,7 @@ class UserStatsDialogFragment : DialogFragment() {
             }
     }
 
-    // 🔥 анимация горизонтальных баров
+    // Анимация горизонтальных индикаторов статистики
     private fun animateHorizontalBars(
         publicCount: Int,
         privateCount: Int,
@@ -129,6 +131,7 @@ class UserStatsDialogFragment : DialogFragment() {
         animateScaleX(binding.barDislikes, dislikesTotal.toFloat() / maxLikeDislike)
     }
 
+    // Анимация изменения масштаба по оси X
     private fun animateScaleX(view: View, ratio: Float) {
         val target = max(0.02f, ratio)
         view.post {
@@ -142,7 +145,7 @@ class UserStatsDialogFragment : DialogFragment() {
         }
     }
 
-    // 🗓 только 7 дней
+    // Создание и отображение гистограммы за 7 дней
     private fun renderDailyChart7() {
         val days = 7
         val counts = buildDailyCounts(days)
@@ -154,22 +157,20 @@ class UserStatsDialogFragment : DialogFragment() {
         val itemPaddingDp = 8
         val sdf = SimpleDateFormat("dd.MM", Locale.getDefault())
 
-        // 👇 Ждём, когда hsDays реально разложится и получит нормальную высоту
+        // Ожидание полной отрисовки контейнера для расчета размеров
         val vto = binding.hsDays.viewTreeObserver
         vto.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
-                // снимаем слушатель, чтобы не вызывалось бесконечно
                 binding.hsDays.viewTreeObserver.removeOnGlobalLayoutListener(this)
 
                 val containerH = binding.hsDays.height
                 if (containerH <= 0) {
-                    // на всякий случай, если вдруг всё равно 0
                     Toast.makeText(requireContext(), "Высота графика = 0, проверь layout", Toast.LENGTH_SHORT).show()
                     return
                 }
 
-                val topReserve = dpToPx(28)      // место под цифру + запас
-                val bottomReserve = dpToPx(24)   // место под дату
+                val topReserve = dpToPx(28)
+                val bottomReserve = dpToPx(24)
                 val extraSafety = dpToPx(10)
 
                 val maxBarHeightPx = max(1, containerH - topReserve - bottomReserve - extraSafety)
@@ -232,8 +233,7 @@ class UserStatsDialogFragment : DialogFragment() {
         })
     }
 
-
-
+    // Подсчет количества палитр по дням
     private fun buildDailyCounts(days: Int): IntArray {
         val counts = IntArray(days)
 
@@ -255,6 +255,7 @@ class UserStatsDialogFragment : DialogFragment() {
         return counts
     }
 
+    // Приведение времени к началу дня
     private fun startOfDayMillis(timeMillis: Long): Long {
         val cal = Calendar.getInstance()
         cal.timeInMillis = timeMillis
@@ -262,6 +263,7 @@ class UserStatsDialogFragment : DialogFragment() {
         return cal.timeInMillis
     }
 
+    // Сброс времени в календаре до начала дня
     private fun setToStartOfDay(cal: Calendar) {
         cal.set(Calendar.HOUR_OF_DAY, 0)
         cal.set(Calendar.MINUTE, 0)
@@ -269,6 +271,7 @@ class UserStatsDialogFragment : DialogFragment() {
         cal.set(Calendar.MILLISECOND, 0)
     }
 
+    // Получение даты для определенного индекса в гистограмме
     private fun dayStartMillisToDate(days: Int, index: Int): Date {
         val cal = Calendar.getInstance()
         setToStartOfDay(cal)
@@ -277,6 +280,7 @@ class UserStatsDialogFragment : DialogFragment() {
         return cal.time
     }
 
+    // Конвертация dp в пиксели
     private fun dpToPx(dp: Int): Int {
         return (dp * resources.displayMetrics.density + 0.5f).toInt()
     }

@@ -26,36 +26,32 @@ import com.example.vcolorai.utils.DateTimeUtils
 import com.google.firebase.firestore.FirebaseFirestore
 import java.io.File
 
-/**
- * UI-модель элемента ленты
- */
 data class PublicFeedItem(
     val id: String,
     val paletteName: String,
     val colors: List<String>,
 
-    // Автор
+    // автор
     val authorId: String,
     val authorName: String?,
 
-    // Описание / теги
+    // описание и теги
     val description: String?,
     val tags: List<String>,
 
-    // Реакции
+    // реакции
     val likesCount: Long,
     val dislikesCount: Long,
 
-    // Онлайн URL (должен быть https://..., иначе на других устройствах не откроется)
+    // онлайн изображение
     val imageUri: String?,
 
-    // ✅ Локальная копия (для оффлайна на этом же устройстве)
+    // локальное изображение
     val localImagePath: String? = null,
 
-    // текущий голос пользователя: 1 / -1 / 0
     val currentUserVote: Int,
 
-    // дата публикации/создания
+    // дата публикации
     val createdAt: Long
 )
 
@@ -96,14 +92,14 @@ class PublicFeedAdapter(
         val context = holder.itemView.context
         val density = context.resources.displayMetrics.density
 
-        // ---------- AUTHOR ----------
+        // автор
         bindAuthorName(holder, item)
         holder.tvAuthorName.setOnClickListener {
             val uid = item.authorId.trim()
             if (uid.isNotBlank()) onAuthorClick(uid)
         }
 
-        // ---------- DESCRIPTION ----------
+        // описание
         if (item.description.isNullOrBlank()) {
             holder.tvDescription.visibility = View.GONE
         } else {
@@ -111,13 +107,13 @@ class PublicFeedAdapter(
             holder.tvDescription.text = item.description
         }
 
-        // ---------- TAGS ----------
+        // теги
         renderTags(holder.tagsContainer, item.tags, density)
 
-        // ---------- PALETTE ----------
+        // палитра
         renderPalette(context, holder.paletteContainer, item.colors, density)
 
-        // ---------- VOTES ----------
+        // лайки
         holder.tvLikesCount.text = item.likesCount.toString()
         holder.tvDislikesCount.text = item.dislikesCount.toString()
         applyVoteState(holder, item.currentUserVote)
@@ -125,7 +121,7 @@ class PublicFeedAdapter(
         holder.btnLike.setOnClickListener { onLike(item) }
         holder.btnDislike.setOnClickListener { onDislike(item) }
 
-        // ---------- DATE ----------
+        // дата
         if (item.createdAt > 0L) {
             holder.tvPublishDate.visibility = View.VISIBLE
             holder.tvPublishDate.text = DateTimeUtils.format(item.createdAt)
@@ -134,12 +130,12 @@ class PublicFeedAdapter(
             holder.tvPublishDate.text = ""
         }
 
-        // ---------- MENU ----------
+        // меню
         holder.btnMore.setOnClickListener {
             showMoreMenu(context, holder.btnMore, item)
         }
 
-        // ---------- IMAGE ----------
+        // изображение
         bindImage(holder, item)
     }
 
@@ -149,8 +145,6 @@ class PublicFeedAdapter(
         items = newItems
         notifyDataSetChanged()
     }
-
-    // ================= AUTHOR NAME =================
 
     private fun bindAuthorName(holder: FeedViewHolder, item: PublicFeedItem) {
         val authorId = item.authorId.trim()
@@ -162,7 +156,6 @@ class PublicFeedAdapter(
         }
 
         holder.tvAuthorName.text = item.authorName ?: "User"
-
         if (authorId.isBlank()) return
 
         db.collection("public_users").document(authorId).get()
@@ -177,8 +170,6 @@ class PublicFeedAdapter(
             }
     }
 
-    // ================= IMAGE =================
-
     private fun bindImage(holder: FeedViewHolder, item: PublicFeedItem) {
         val context = holder.itemView.context
 
@@ -186,7 +177,6 @@ class PublicFeedAdapter(
         val url = item.imageUri?.trim().orEmpty()
         val online = hasInternet(context)
 
-        // 1) локальная копия (если есть)
         if (localPath.isNotBlank()) {
             val f = File(localPath)
             if (f.exists() && f.length() > 0) {
@@ -204,7 +194,6 @@ class PublicFeedAdapter(
             }
         }
 
-        // 2) нет локальной и нет url
         if (url.isBlank()) {
             holder.ivPaletteImage.visibility = View.GONE
             holder.ivPaletteImage.setImageDrawable(null)
@@ -212,7 +201,6 @@ class PublicFeedAdapter(
             return
         }
 
-        // 3) есть url, но оффлайн
         holder.ivPaletteImage.visibility = View.VISIBLE
         if (!online) {
             holder.ivPaletteImage.setImageResource(R.drawable.placeholder_image)
@@ -226,9 +214,8 @@ class PublicFeedAdapter(
             return
         }
 
-        // 4) онлайн — грузим по url
         Glide.with(context)
-            .load(url) // должен быть https://
+            .load(url)
             .centerCrop()
             .placeholder(R.drawable.placeholder_image)
             .into(holder.ivPaletteImage)
@@ -250,8 +237,6 @@ class PublicFeedAdapter(
             false
         }
     }
-
-    // ================= UI HELPERS =================
 
     private fun isDarkTheme(context: Context): Boolean {
         val mode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
@@ -310,7 +295,11 @@ class PublicFeedAdapter(
         val textColor = if (isDarkTheme(context)) Color.WHITE else Color.BLACK
 
         colors.forEach { hex ->
-            val colorInt = try { Color.parseColor(hex) } catch (_: Exception) { Color.GRAY }
+            val colorInt = try {
+                Color.parseColor(hex)
+            } catch (_: Exception) {
+                Color.GRAY
+            }
 
             val wrapper = LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
@@ -318,7 +307,9 @@ class PublicFeedAdapter(
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { setMargins(margin, margin, margin, margin) }
+                ).apply {
+                    setMargins(margin, margin, margin, margin)
+                }
             }
 
             val colorView = View(context).apply {

@@ -13,7 +13,10 @@ import kotlin.random.Random
 
 object ColorUtils {
 
-    // 🎨 Извлекаем цвета из изображения с помощью Palette + собственная выборка пикселей
+    // -------------------------------------------------------------------------
+    // ИЗВЛЕЧЕНИЕ ЦВЕТОВ ИЗ ИЗОБРАЖЕНИЯ
+    // -------------------------------------------------------------------------
+
     fun extractColorsFromImage(context: Context, uri: Uri): List<Int> {
         val inputStream = context.contentResolver.openInputStream(uri)
         val bitmap = BitmapFactory.decodeStream(inputStream)
@@ -27,14 +30,17 @@ object ColorUtils {
 
         val paletteColors = palette.swatches.map { it.rgb }
 
-        // Дополнительная обработка — получение средних тонов из пикселей
+        // Дополнительный анализ пикселей изображения
         val pixelColors = getPixelsFromUri(context, uri)
         val clustered = clusterColors(pixelColors, 5)
 
         return (paletteColors + clustered).distinct()
     }
 
-    // 🧠 Генерация палитры на основе текста
+    // -------------------------------------------------------------------------
+    // ГЕНЕРАЦИЯ ЦВЕТОВ НА ОСНОВЕ ТЕКСТОВОГО ОПИСАНИЯ
+    // -------------------------------------------------------------------------
+
     fun generateColorsFromText(text: String): List<Int> {
         val lower = text.lowercase()
         val base = when {
@@ -52,7 +58,7 @@ object ColorUtils {
                 listOf(0xFF808080, 0xFFA0A0A0, 0xFFC0C0C0)
         }
 
-        // Небольшой сдвиг оттенков для "живости"
+        // Добавление случайных вариаций для создания более естественной палитры
         return base.map { color ->
             val hsv = FloatArray(3)
             Color.colorToHSV(color.toInt(), hsv)
@@ -61,7 +67,10 @@ object ColorUtils {
         }
     }
 
-    // ⚗️ Комбинированная палитра: текст + изображение
+    // -------------------------------------------------------------------------
+    // КОМБИНИРОВАНИЕ ПАЛИТР ИЗ ИЗОБРАЖЕНИЯ И ТЕКСТА
+    // -------------------------------------------------------------------------
+
     fun fusePalettes(imgColors: List<Int>, textColors: List<Int>): List<Int> {
         if (imgColors.isEmpty()) return textColors
         if (textColors.isEmpty()) return imgColors
@@ -75,7 +84,10 @@ object ColorUtils {
         return result.distinct()
     }
 
-    // 🎚️ Смешивание двух цветов
+    // -------------------------------------------------------------------------
+    // СМЕШИВАНИЕ ДВУХ ЦВЕТОВ
+    // -------------------------------------------------------------------------
+
     fun mixColors(c1: Int, c2: Int, w1: Float, w2: Float): Int {
         val r = ((Color.red(c1) * w1) + (Color.red(c2) * w2)).toInt()
         val g = ((Color.green(c1) * w1) + (Color.green(c2) * w2)).toInt()
@@ -83,7 +95,10 @@ object ColorUtils {
         return Color.rgb(r, g, b)
     }
 
-    // 🧩 Получение пикселей из изображения
+    // -------------------------------------------------------------------------
+    // ПОЛУЧЕНИЕ ЦВЕТОВ ПИКСЕЛЕЙ ИЗ ИЗОБРАЖЕНИЯ
+    // -------------------------------------------------------------------------
+
     fun getPixelsFromUri(context: Context, uri: Uri, maxSize: Int = 400): IntArray {
         val input = context.contentResolver.openInputStream(uri)
         val bmp = BitmapFactory.decodeStream(input) ?: return IntArray(0)
@@ -103,7 +118,10 @@ object ColorUtils {
         return pixels
     }
 
-    // 🌀 Простая кластеризация цветов (псевдо-k-means)
+    // -------------------------------------------------------------------------
+    // КЛАСТЕРИЗАЦИЯ ЦВЕТОВ (УПРОЩЕННЫЙ АЛГОРИТМ K-MEANS)
+    // -------------------------------------------------------------------------
+
     private fun clusterColors(pixels: IntArray, clusterCount: Int): List<Int> {
         if (pixels.isEmpty()) return emptyList()
 
@@ -138,22 +156,23 @@ object ColorUtils {
         return Color.rgb(r, g, b)
     }
 
-    // Добавьте в ColorUtils.kt внутри object ColorUtils
+    // -------------------------------------------------------------------------
+    // ГЕНЕРАЦИЯ ПАЛИТРЫ ПОДОБНЫХ ЦВЕТОВ НА ОСНОВЕ БАЗОВОГО ЦВЕТА
+    // -------------------------------------------------------------------------
+
     fun generateSimilarColors(baseColor: Int, count: Int = 6): List<Int> {
         val out = mutableListOf<Int>()
         val baseHsv = FloatArray(3)
         android.graphics.Color.colorToHSV(baseColor, baseHsv)
 
-        // набор небольших сдвигов (в градусах)
         val hueShifts = listOf(-24f, -12f, -6f, 0f, 6f, 12f, 24f)
         val rand = kotlin.random.Random
 
         var i = 0
         while (out.size < count) {
-            // берем шаблонный сдвиг и небольшую случайность
             val hShift = hueShifts[i % hueShifts.size] + rand.nextFloat() * 6f - 3f
-            val sMult = (0.85f + rand.nextFloat() * 0.4f).coerceIn(0f, 1f) // 0.85..1.25
-            val vMult = (0.85f + rand.nextFloat() * 0.3f).coerceIn(0f, 1f) // 0.85..1.15
+            val sMult = (0.85f + rand.nextFloat() * 0.4f).coerceIn(0f, 1f)
+            val vMult = (0.85f + rand.nextFloat() * 0.3f).coerceIn(0f, 1f)
 
             val newHsv = baseHsv.copyOf()
             newHsv[0] = (newHsv[0] + hShift + 360f) % 360f
@@ -163,11 +182,10 @@ object ColorUtils {
             val newColor = android.graphics.Color.HSVToColor(newHsv)
             if (!out.contains(newColor)) out.add(newColor)
             i++
-            // safety in case of weird collisions
+            // Защита от бесконечного цикла в случае коллизий
             if (i > count * 10) break
         }
 
         return out.take(count)
     }
-
 }

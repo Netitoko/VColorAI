@@ -7,7 +7,6 @@ import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -23,12 +22,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.core.widget.addTextChangedListener
 import com.example.vcolorai.EmailSender
-import com.example.vcolorai.LoginActivity
+import com.example.vcolorai.ui.auth.LoginActivity
 import com.example.vcolorai.R
 import com.example.vcolorai.databinding.FragmentSettingsBinding
 import com.example.vcolorai.ui.auth.ForgotPasswordDialogFragment
 import com.example.vcolorai.ui.common.BaseFragment
-import com.example.vcolorai.ui.profile.EditProfileDialogFragment
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
@@ -53,17 +51,17 @@ class SettingsFragment : BaseFragment() {
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
 
-    // --- смена почты ---
+    // Система подтверждения смены email через код
     private var emailChangeCode: String? = null
     private var emailTimer: CountDownTimer? = null
     private var isEmailTimerRunning = false
 
-    // --- смена пароля ---
+    // Система подтверждения смены пароля через код
     private var passwordChangeCode: String? = null
     private var passwordTimer: CountDownTimer? = null
     private var isPasswordTimerRunning = false
 
-    // --- prefs для темы ---
+    // Локальное хранилище для настроек темы
     private val prefs by lazy {
         requireContext().getSharedPreferences("app_settings", Context.MODE_PRIVATE)
     }
@@ -90,6 +88,7 @@ class SettingsFragment : BaseFragment() {
         }
     }
 
+    // Адаптация интерфейса под системные отступы
     override fun applyInsets(root: View) {
         val initialRootTop = binding.settingsRoot.paddingTop
         val initialCloseTop = binding.btnCloseSettings.paddingTop
@@ -109,9 +108,10 @@ class SettingsFragment : BaseFragment() {
         }
     }
 
+    // Настройка обработчиков нажатий для всех пунктов меню
     private fun setupListeners() {
 
-        // ✅ Изменить профиль
+        // Редактирование профиля пользователя
         binding.btnEditProfile.setOnClickListener {
             val user = auth.currentUser
             if (user == null) {
@@ -137,7 +137,7 @@ class SettingsFragment : BaseFragment() {
                 }
         }
 
-        // ✅ Сменить email
+        // Смена email пользователя
         binding.btnChangeEmail.setOnClickListener {
             val user = auth.currentUser
             if (user == null) {
@@ -148,7 +148,7 @@ class SettingsFragment : BaseFragment() {
             showChangeEmailDialogLikeRegister()
         }
 
-        // ✅ Сменить пароль
+        // Смена пароля пользователя
         binding.btnChangePassword.setOnClickListener {
             val user = auth.currentUser
             if (user == null) {
@@ -158,17 +158,17 @@ class SettingsFragment : BaseFragment() {
             showChangePasswordDialogLikeRegister()
         }
 
-        // ✅ Моя активность
+        // Просмотр статистики пользователя
         binding.btnMyStats.setOnClickListener {
             UserStatsDialogFragment().show(parentFragmentManager, "user_stats")
         }
 
-        // ✅ Экспорт PDF (только 7 дней)
+        // Экспорт статистики в PDF
         binding.btnExportPdf.setOnClickListener {
             exportStatsToPdf()
         }
 
-        // ✅ Правила публикаций (отдельный экран)
+        // Переход к правилам публикаций
         binding.btnRules.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, RulesFragment())
@@ -176,28 +176,29 @@ class SettingsFragment : BaseFragment() {
                 .commit()
         }
 
-        // ✅ Тема приложения
+        // Настройка темы приложения
         binding.btnTheme.setOnClickListener {
             showThemeDialog()
         }
 
-        // Выйти
+        // Выход из аккаунта
         binding.btnLogout.setOnClickListener {
             auth.signOut()
             startActivity(Intent(requireContext(), LoginActivity::class.java))
             requireActivity().finish()
         }
 
-        // Удалить аккаунт
+        // Удаление аккаунта
         binding.btnDeleteAccount.setOnClickListener {
             showDeleteAccountDialog()
         }
     }
 
     // -------------------------------------------------------------------------
-    // THEME
+    // УПРАВЛЕНИЕ ТЕМОЙ ПРИЛОЖЕНИЯ
     // -------------------------------------------------------------------------
 
+    // Диалог выбора темы приложения
     private fun showThemeDialog() {
         val items = arrayOf("Светлая", "Тёмная", "Как на устройстве")
 
@@ -231,9 +232,10 @@ class SettingsFragment : BaseFragment() {
     }
 
     // -------------------------------------------------------------------------
-    // EMAIL CHANGE
+    // СМЕНА EMAIL С ПОДТВЕРЖДЕНИЕМ ПО КОДУ
     // -------------------------------------------------------------------------
 
+    // Диалог смены email с двухэтапной проверкой
     private fun showChangeEmailDialogLikeRegister() {
         val user = auth.currentUser ?: return
 
@@ -249,6 +251,7 @@ class SettingsFragment : BaseFragment() {
             .setNegativeButton("Отмена", null)
             .create()
 
+        // Отправка кода подтверждения на новый email
         btnSend.setOnClickListener {
             if (isEmailTimerRunning) {
                 Toast.makeText(requireContext(), "Подождите перед повторной отправкой", Toast.LENGTH_SHORT).show()
@@ -281,6 +284,7 @@ class SettingsFragment : BaseFragment() {
             }
         }
 
+        // Подтверждение смены email по коду
         btnConfirm.setOnClickListener {
             val newEmail = etNewEmail.text.toString().trim().lowercase()
             val code = etCode.text.toString().trim()
@@ -300,6 +304,7 @@ class SettingsFragment : BaseFragment() {
         dialog.show()
     }
 
+    // Обновление email с повторной аутентификацией при необходимости
     private fun updateEmailWithReauthIfNeeded(newEmail: String, onDone: () -> Unit) {
         val user = auth.currentUser ?: return
 
@@ -325,6 +330,7 @@ class SettingsFragment : BaseFragment() {
         doUpdate()
     }
 
+    // Таймер обратного отсчета для повторной отправки email-кода
     private fun startEmailCountdown(btn: Button) {
         emailTimer?.cancel()
         isEmailTimerRunning = true
@@ -344,9 +350,10 @@ class SettingsFragment : BaseFragment() {
     }
 
     // -------------------------------------------------------------------------
-    // PASSWORD CHANGE
+    // СМЕНА ПАРОЛЯ С ПОДТВЕРЖДЕНИЕМ ПО КОДУ
     // -------------------------------------------------------------------------
 
+    // Диалог смены пароля с проверкой сложности
     private fun showChangePasswordDialogLikeRegister() {
         val user = auth.currentUser ?: return
         val email = user.email ?: run {
@@ -371,6 +378,7 @@ class SettingsFragment : BaseFragment() {
         val etCode = view.findViewById<EditText>(R.id.etPasswordCode)
         val btnConfirm = view.findViewById<Button>(R.id.btnConfirmPasswordChange)
 
+        // Валидация сложности пароля в реальном времени
         etNewPass.addTextChangedListener { txt ->
             updatePasswordRequirements(
                 password = txt?.toString().orEmpty(),
@@ -392,6 +400,7 @@ class SettingsFragment : BaseFragment() {
             .setNegativeButton("Отмена", null)
             .create()
 
+        // Отправка кода подтверждения на email
         btnSend.setOnClickListener {
             if (isPasswordTimerRunning) {
                 Toast.makeText(requireContext(), "Подождите перед повторной отправкой", Toast.LENGTH_SHORT).show()
@@ -447,6 +456,7 @@ class SettingsFragment : BaseFragment() {
                 }
         }
 
+        // Подтверждение смены пароля по коду
         btnConfirm.setOnClickListener {
             val code = etCode.text.toString().trim()
             if (passwordChangeCode.isNullOrBlank() || code != passwordChangeCode) {
@@ -473,6 +483,7 @@ class SettingsFragment : BaseFragment() {
         dialog.show()
     }
 
+    // Таймер обратного отсчета для повторной отправки кода смены пароля
     private fun startPasswordCountdown(btn: Button) {
         passwordTimer?.cancel()
         isPasswordTimerRunning = true
@@ -491,12 +502,14 @@ class SettingsFragment : BaseFragment() {
         }.start()
     }
 
+    // Проверка соответствия пароля требованиям безопасности
     private fun isPasswordStrongLikeRegister(password: String): Boolean {
         val pattern =
             Regex("^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%^&*()_+=\\-{}\\[\\]:;\"'<>,?/]).{6,}\$")
         return password.matches(pattern)
     }
 
+    // Визуальное отображение требований к паролю
     private fun updatePasswordRequirements(
         password: String,
         tvReqLength: TextView,
@@ -516,9 +529,10 @@ class SettingsFragment : BaseFragment() {
     }
 
     // -------------------------------------------------------------------------
-    // REAUTH DIALOG
+    // ПОВТОРНАЯ АУТЕНТИФИКАЦИЯ ДЛЯ КРИТИЧЕСКИХ ОПЕРАЦИЙ
     // -------------------------------------------------------------------------
 
+    // Диалог повторной аутентификации при необходимости
     private fun showReauthDialog(title: String, message: String, onOk: () -> Unit) {
         val user = auth.currentUser ?: return
         val email = user.email ?: return
@@ -565,6 +579,7 @@ class SettingsFragment : BaseFragment() {
         dlg.show()
     }
 
+    // Проверка необходимости повторной аутентификации
     private fun isRecentLoginRequired(e: Exception): Boolean {
         return (e is FirebaseAuthRecentLoginRequiredException) ||
                 (e.message?.contains("requires recent login", ignoreCase = true) == true) ||
@@ -572,9 +587,10 @@ class SettingsFragment : BaseFragment() {
     }
 
     // -------------------------------------------------------------------------
-    // DELETE ACCOUNT
+    // УДАЛЕНИЕ АККАУНТА И ВСЕХ ДАННЫХ ПОЛЬЗОВАТЕЛЯ
     // -------------------------------------------------------------------------
 
+    // Предупреждение об удалении аккаунта
     private fun showDeleteAccountDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle("Удалить аккаунт?")
@@ -586,6 +602,7 @@ class SettingsFragment : BaseFragment() {
             .show()
     }
 
+    // Процедура полного удаления аккаунта пользователя
     private fun deleteAccount() {
         val user = auth.currentUser ?: run {
             Toast.makeText(requireContext(), "Войдите в аккаунт", Toast.LENGTH_SHORT).show()
@@ -594,11 +611,11 @@ class SettingsFragment : BaseFragment() {
         }
         val uid = user.uid
 
-        // 1) сначала удаляем данные из Firestore
+        // Сначала удаляем все данные из Firestore
         deleteUserDataEverywhere(
             uid = uid,
             onSuccess = {
-                // 2) затем удаляем Auth аккаунт
+                // Затем удаляем аккаунт из Firebase Authentication
                 user.delete()
                     .addOnSuccessListener {
                         Toast.makeText(requireContext(), "Аккаунт удалён", Toast.LENGTH_SHORT).show()
@@ -623,20 +640,22 @@ class SettingsFragment : BaseFragment() {
         )
     }
 
+    // Генерация ключа для имени пользователя в формате базы данных
     private fun usernameKey(username: String): String = username.trim().lowercase()
 
+    // Каскадное удаление всех данных пользователя из Firestore
     private fun deleteUserDataEverywhere(
         uid: String,
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
-        // Сначала узнаем username (чтобы удалить usernames/{key})
+        // Получаем информацию о пользователе для удаления из коллекции usernames
         db.collection("users").document(uid).get()
             .addOnSuccessListener { userDoc ->
                 val username = userDoc.getString("username")?.trim().orEmpty()
                 val uKey = usernameKey(username)
 
-                // 1) удалить подколлекции внутри users/{uid}
+                // Рекурсивное удаление подколлекций пользователя
                 deleteCollection(db.collection("users").document(uid).collection("notifications"),
                     onDone = {
                         deleteCollection(db.collection("users").document(uid).collection("liked_palettes"),
@@ -646,23 +665,21 @@ class SettingsFragment : BaseFragment() {
                                         deleteCollection(db.collection("users").document(uid).collection("followers"),
                                             onDone = {
 
-                                                // 2) удалить "следы" подписок у других пользователей
-                                                // другие -> following/{uid}
+                                                // Удаление следов подписок у других пользователей
                                                 deleteCollectionGroupByDocId("following", uid,
                                                     onDone = {
-                                                        // другие -> followers/{uid}
                                                         deleteCollectionGroupByDocId("followers", uid,
                                                             onDone = {
 
-                                                                // 3) удалить все голоса пользователя votes/{uid} по всем палитрам
+                                                                // Удаление всех голосов пользователя
                                                                 deleteCollectionGroupByDocId("votes", uid,
                                                                     onDone = {
 
-                                                                        // 4) удалить все палитры пользователя + их votes/*
+                                                                        // Удаление палитр пользователя и связанных данных
                                                                         deleteMyPalettesAndTheirVotes(uid,
                                                                             onDone = {
 
-                                                                                // 5) удалить основные документы пользователя
+                                                                                // Удаление основных документов пользователя
                                                                                 val batch = db.batch()
                                                                                 batch.delete(db.collection("public_users").document(uid))
                                                                                 batch.delete(db.collection("user_profiles").document(uid))
@@ -703,6 +720,7 @@ class SettingsFragment : BaseFragment() {
             .addOnFailureListener { e -> onError(e) }
     }
 
+    // Удаление всей коллекции документов
     private fun deleteCollection(
         col: CollectionReference,
         onDone: () -> Unit,
@@ -719,6 +737,7 @@ class SettingsFragment : BaseFragment() {
             .addOnFailureListener { e -> onError(e) }
     }
 
+    // Удаление документов из collectionGroup по ID
     private fun deleteCollectionGroupByDocId(
         collectionName: String,
         docId: String,
@@ -740,6 +759,7 @@ class SettingsFragment : BaseFragment() {
             .addOnFailureListener { e -> onError(e) }
     }
 
+    // Удаление палитр пользователя и связанных голосов
     private fun deleteMyPalettesAndTheirVotes(
         uid: String,
         onDone: () -> Unit,
@@ -761,7 +781,7 @@ class SettingsFragment : BaseFragment() {
 
                     val paletteRef = palettes[index].reference
 
-                    // сначала удаляем votes под палитрой, потом саму палитру
+                    // Сначала удаляем голоса, затем палитру
                     paletteRef.collection("votes").get()
                         .addOnSuccessListener { votesSnap ->
                             val voteRefs = votesSnap.documents.map { it.reference }
@@ -782,6 +802,7 @@ class SettingsFragment : BaseFragment() {
             .addOnFailureListener { e -> onError(e) }
     }
 
+    // Удаление документов пакетами для избежания превышения лимитов
     private fun deleteDocsInChunks(
         refs: List<DocumentReference>,
         onDone: () -> Unit,
@@ -791,7 +812,7 @@ class SettingsFragment : BaseFragment() {
             onDone(); return
         }
 
-        val chunkSize = 450 // безопасно < 500
+        val chunkSize = 450
         val chunks = refs.chunked(chunkSize)
 
         fun commitChunk(i: Int) {
@@ -811,9 +832,10 @@ class SettingsFragment : BaseFragment() {
     }
 
     // -------------------------------------------------------------------------
-    // PDF EXPORT (ТОЛЬКО 7 ДНЕЙ)
+    // ЭКСПОРТ СТАТИСТИКИ В PDF
     // -------------------------------------------------------------------------
 
+    // Вспомогательная структура для данных палитры
     private data class PaletteDoc(
         val isPublic: Boolean,
         val likes: Int,
@@ -821,6 +843,7 @@ class SettingsFragment : BaseFragment() {
         val createdAtMillis: Long
     )
 
+    // Структура статистики для PDF отчета
     private data class StatsForPdf(
         val total: Int,
         val publicCount: Int,
@@ -830,6 +853,7 @@ class SettingsFragment : BaseFragment() {
         val counts7: IntArray
     )
 
+    // Экспорт статистики пользователя в PDF файл
     private fun exportStatsToPdf() {
         val user = auth.currentUser
         if (user == null) {
@@ -875,6 +899,7 @@ class SettingsFragment : BaseFragment() {
             }
     }
 
+    // Создание PDF документа со статистикой
     private fun createStatsPdf(stats: StatsForPdf): File {
         val doc = PdfDocument()
 
@@ -936,7 +961,7 @@ class SettingsFragment : BaseFragment() {
         canvas.drawText("Создано за 7 дней:", 40f, y, paintText)
         canvas.drawText(created7.toString(), 220f, y, paintBold)
 
-        // bars
+        // Гистограмма лайков/дизлайков
         y = gap(y)
         canvas.drawText("Лайки vs дизлайки", 40f, y, paintBold)
 
@@ -967,7 +992,7 @@ class SettingsFragment : BaseFragment() {
         y = drawHBar("Лайки", stats.likesTotal, y, 0xFF81C784.toInt())
         y = drawHBar("Дизлайки", stats.dislikesTotal, y, 0xFFE57373.toInt())
 
-        // histogram 7
+        // Гистограмма по дням за 7 дней
         y = gap(y)
         canvas.drawText("Палитры по дням — 7 дней", 40f, y, paintBold)
         y += 12f
@@ -991,6 +1016,7 @@ class SettingsFragment : BaseFragment() {
         return file
     }
 
+    // Отрисовка гистограммы по дням
     private fun drawDailyHistogram(
         canvas: android.graphics.Canvas,
         left: Float,
@@ -1068,6 +1094,7 @@ class SettingsFragment : BaseFragment() {
         }
     }
 
+    // Отправка PDF файла через системное меню "поделиться"
     private fun sharePdf(file: File) {
         val uri = FileProvider.getUriForFile(
             requireContext(),
@@ -1084,6 +1111,7 @@ class SettingsFragment : BaseFragment() {
         startActivity(Intent.createChooser(intent, "Поделиться PDF"))
     }
 
+    // Подсчет количества созданных палитр по дням
     private fun buildDailyCounts(docs: List<PaletteDoc>, days: Int): IntArray {
         val counts = IntArray(days)
 
@@ -1103,6 +1131,7 @@ class SettingsFragment : BaseFragment() {
         return counts
     }
 
+    // Получение времени начала дня в миллисекундах
     private fun startOfDayMillis(timeMillis: Long): Long {
         val cal = Calendar.getInstance()
         cal.timeInMillis = timeMillis
@@ -1110,6 +1139,7 @@ class SettingsFragment : BaseFragment() {
         return cal.timeInMillis
     }
 
+    // Сброс времени в календаре до начала дня
     private fun setToStartOfDay(cal: Calendar) {
         cal.set(Calendar.HOUR_OF_DAY, 0)
         cal.set(Calendar.MINUTE, 0)

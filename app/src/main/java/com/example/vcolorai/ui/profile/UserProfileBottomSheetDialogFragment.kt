@@ -1,4 +1,4 @@
-package com.example.vcolorai.ui.userprofile
+package com.example.vcolorai.ui.profile
 
 import android.os.Bundle
 import android.util.Log
@@ -57,7 +57,9 @@ class UserProfileBottomSheetDialogFragment : BottomSheetDialogFragment() {
         return binding.root
     }
 
-    // ---------------- Header ----------------
+    // -------------------------------------------------------------------------
+    // ЗАГРУЗКА ИНФОРМАЦИИ О ПОЛЬЗОВАТЕЛЕ (АВАТАР И ИМЯ)
+    // -------------------------------------------------------------------------
 
     private fun loadUserHeader() {
         db.collection("public_users")
@@ -80,7 +82,9 @@ class UserProfileBottomSheetDialogFragment : BottomSheetDialogFragment() {
             }
     }
 
-    // ---------------- Subscribe ----------------
+    // -------------------------------------------------------------------------
+    // УПРАВЛЕНИЕ ПОДПИСКОЙ НА ПОЛЬЗОВАТЕЛЯ
+    // -------------------------------------------------------------------------
 
     private fun setupSubscribeButton() {
         val currentUid = auth.currentUser?.uid ?: return
@@ -110,6 +114,7 @@ class UserProfileBottomSheetDialogFragment : BottomSheetDialogFragment() {
         }
     }
 
+    // Подписка на пользователя
     private fun follow(ref: com.google.firebase.firestore.DocumentReference) {
         val uid = auth.currentUser?.uid ?: return
         ref.set(mapOf("userId" to uid))
@@ -118,6 +123,7 @@ class UserProfileBottomSheetDialogFragment : BottomSheetDialogFragment() {
             }
     }
 
+    // Отписка от пользователя
     private fun unfollow(ref: com.google.firebase.firestore.DocumentReference) {
         ref.delete()
             .addOnSuccessListener {
@@ -125,12 +131,15 @@ class UserProfileBottomSheetDialogFragment : BottomSheetDialogFragment() {
             }
     }
 
+    // Обновление текста кнопки подписки
     private fun updateSubscribeButton(isFollowing: Boolean) {
         binding.btnSubscribe.text =
             if (isFollowing) "Отписаться" else "Подписаться"
     }
 
-    // ---------------- Palettes ----------------
+    // -------------------------------------------------------------------------
+    // ЗАГРУЗКА ПАЛИТР ПОЛЬЗОВАТЕЛЯ
+    // -------------------------------------------------------------------------
 
     private fun setupRecycler() {
         adapter = PublicFeedAdapter(
@@ -139,12 +148,13 @@ class UserProfileBottomSheetDialogFragment : BottomSheetDialogFragment() {
             onSharePalette = {},
             onLike = {},
             onDislike = {},
-            onAuthorClick = {} // уже внутри профиля
+            onAuthorClick = {}
         )
 
         binding.rvUserPalettes.adapter = adapter
     }
 
+    // Загрузка публичных палитр пользователя
     private fun loadUserPalettes() {
         db.collection("color_palettes")
             .whereEqualTo("userId", userId)

@@ -7,7 +7,7 @@ import kotlin.random.Random
 
 object TextPaletteGenerator {
 
-    // ассоциативные модификаторы тона
+    // Модификаторы тона для текстовых описаний
     private val toneModifiers = mapOf(
         "dark" to Triple(0f, 0.1f, -0.3f),
         "deep" to Triple(0f, 0.15f, -0.2f),
@@ -23,19 +23,20 @@ object TextPaletteGenerator {
         "night" to Triple(-5f, 0.1f, -0.25f)
     )
 
+    // Генерация палитры на основе текстового описания
     fun generatePaletteFromText(context: Context, text: String): List<String> {
         ColorKeywordLookup.load(context)
 
         val words = text.lowercase().split(" ").filter { it.isNotBlank() }
 
-        // определяем базовые цвета
+        // Поиск базовых цветов по ключевым словам
         val foundColors = ColorKeywordLookup.findColors(words)
         if (foundColors.isEmpty()) return listOf("#808080", "#999999", "#AAAAAA", "#BBBBBB", "#CCCCCC", "#DDDDDD")
 
-        // смешиваем два цвета, если найдено несколько
+        // Смешивание цветов при наличии нескольких ключевых слов
         val baseColor = if (foundColors.size >= 2) mixColors(foundColors[0], foundColors[1]) else foundColors[0]
 
-        // применяем модификаторы, если есть
+        // Применение текстовых модификаторов
         var hueShift = 0f
         var satShift = 0f
         var valShift = 0f
@@ -47,7 +48,7 @@ object TextPaletteGenerator {
             }
         }
 
-        // создаём 6 оттенков
+        // Создание 6 оттенков на основе базового цвета
         val hsv = FloatArray(3)
         Color.colorToHSV(baseColor, hsv)
 
@@ -63,6 +64,7 @@ object TextPaletteGenerator {
         return palette.distinct()
     }
 
+    // Смешивание двух цветов путем усреднения компонентов
     private fun mixColors(c1: Int, c2: Int): Int {
         val r = (Color.red(c1) + Color.red(c2)) / 2
         val g = (Color.green(c1) + Color.green(c2)) / 2

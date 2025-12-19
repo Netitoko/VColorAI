@@ -39,13 +39,17 @@ class PublicUserProfileFragment : Fragment() {
     private val auth by lazy { FirebaseAuth.getInstance() }
     private val db by lazy { FirebaseFirestore.getInstance() }
 
-    private val viewedUserId: String by lazy { arguments?.getString(ARG_USER_ID).orEmpty() }
+    // Просматриваемый пользователь
+    private val viewedUserId: String by lazy {
+        arguments?.getString(ARG_USER_ID).orEmpty()
+    }
 
     private lateinit var adapter: PublicFeedAdapter
     private var palettes: List<PublicFeedItem> = emptyList()
 
     private var isFollowing = false
 
+    // Firestore listeners
     private var profileListener: ListenerRegistration? = null
     private var palettesListener: ListenerRegistration? = null
     private var followStateListener: ListenerRegistration? = null
@@ -77,6 +81,7 @@ class PublicUserProfileFragment : Fragment() {
         return binding.root
     }
 
+    // Insets
     private fun setupInsets() {
         val baseTop = binding.rootPublicUserProfile.paddingTop
         ViewCompat.setOnApplyWindowInsetsListener(binding.rootPublicUserProfile) { v, insets ->
@@ -86,30 +91,38 @@ class PublicUserProfileFragment : Fragment() {
         }
     }
 
+    // Верхние кнопки
     private fun setupTopActions() {
-        binding.btnClose.setOnClickListener { parentFragmentManager.popBackStack() }
-        binding.btnFollow.setOnClickListener { toggleFollow() }
+        binding.btnClose.setOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
+        binding.btnFollow.setOnClickListener {
+            toggleFollow()
+        }
     }
 
+    // Список палитр
     private fun setupRecycler() {
         adapter = PublicFeedAdapter(
             items = emptyList(),
-            onSaveToMyPalettes = { /* не нужно */ },
-            onSharePalette = { /* можно добавить */ },
+            onSaveToMyPalettes = { },
+            onSharePalette = { },
             onLike = { item -> handleVote(item, isLike = true) },
             onDislike = { item -> handleVote(item, isLike = false) },
-            onAuthorClick = { /* уже в профиле */ }
+            onAuthorClick = { }
         )
 
-        binding.rvUserPalettes.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvUserPalettes.layoutManager =
+            LinearLayoutManager(requireContext())
+
         binding.rvUserPalettes.adapter = adapter
     }
 
-    // ---------- PROFILE HEADER (public_users) ----------
-
+    // Публичный профиль
     private fun loadPublicProfileRealtime() {
         profileListener?.remove()
-        profileListener = db.collection("public_users").document(viewedUserId)
+        profileListener = db.collection("public_users")
+            .document(viewedUserId)
             .addSnapshotListener { snap, e ->
                 if (e != null || snap == null) {
                     Log.e("PUB_PROFILE", "public_users error", e)
@@ -118,8 +131,16 @@ class PublicUserProfileFragment : Fragment() {
                     return@addSnapshotListener
                 }
 
-                val username = snap.getString("username")?.trim().orEmpty().ifBlank { "User" }
-                val avatarUrl = snap.getString("avatarUrl")?.trim().orEmpty()
+                val username =
+                    snap.getString("username")
+                        ?.trim()
+                        .orEmpty()
+                        .ifBlank { "User" }
+
+                val avatarUrl =
+                    snap.getString("avatarUrl")
+                        ?.trim()
+                        .orEmpty()
 
                 binding.tvUsername.text = username
 
@@ -136,11 +157,9 @@ class PublicUserProfileFragment : Fragment() {
             }
     }
 
-    // ---------- COUNTERS (followers/following + likes sum) ----------
-
+    // Счётчики
     private fun loadCountersRealtime() {
         val me = auth.currentUser?.uid ?: run {
-            // если гость — можно показать 0 или скрыть, но главное: не слушаем firestore без auth
             binding.tvFollowersCount.text = "0"
             binding.tvFollowingCount.text = "0"
             binding.tvLikesCount.text = "0"
@@ -149,75 +168,84 @@ class PublicUserProfileFragment : Fragment() {
         }
 
         followersCountListener?.remove()
-        followersCountListener = db.collection("users").document(viewedUserId)
-            .collection("followers")
-            .addSnapshotListener { snap, e ->
-                if (e != null) {
-                    Log.e("PUB_PROFILE", "followers count error", e)
-                    return@addSnapshotListener
+        followersCountListener =
+            db.collection("users")
+                .document(viewedUserId)
+                .collection("followers")
+                .addSnapshotListener { snap, e ->
+                    if (e != null) {
+                        Log.e("PUB_PROFILE", "followers count error", e)
+                        return@addSnapshotListener
+                    }
+                    binding.tvFollowersCount.text =
+                        (snap?.size() ?: 0).toString()
                 }
-                binding.tvFollowersCount.text = (snap?.size() ?: 0).toString()
-            }
 
         followingCountListener?.remove()
-        followingCountListener = db.collection("users").document(viewedUserId)
-            .collection("following")
-            .addSnapshotListener { snap, e ->
-                if (e != null) {
-                    Log.e("PUB_PROFILE", "following count error", e)
-                    return@addSnapshotListener
+        followingCountListener =
+            db.collection("users")
+                .document(viewedUserId)
+                .collection("following")
+                .addSnapshotListener { snap, e ->
+                    if (e != null) {
+                        Log.e("PUB_PROFILE", "following count error", e)
+                        return@addSnapshotListener
+                    }
+                    binding.tvFollowingCount.text =
+                        (snap?.size() ?: 0).toString()
                 }
-                binding.tvFollowingCount.text = (snap?.size() ?: 0).toString()
-            }
 
-        // кнопку подписки скрываем, если это ты сам
         if (me == viewedUserId) {
             binding.btnFollow.visibility = View.GONE
         }
     }
 
-    // пересчёт лайков в шапке из локального списка палитр
+    // Сумма лайков
     private fun updateLikesSumFromPalettes() {
         val sum = palettes.sumOf { it.likesCount }
         binding.tvLikesCount.text = sum.toString()
     }
 
-    // ---------- FOLLOW STATE (SOURCE OF TRUTH = my following/{viewed}) ----------
-
+    // Состояние подписки
     private fun loadFollowStateRealtime() {
         val myId = auth.currentUser?.uid ?: return
         if (myId == viewedUserId) return
 
         followStateListener?.remove()
-        followStateListener = db.collection("users")
-            .document(myId)
-            .collection("following")
-            .document(viewedUserId)
-            .addSnapshotListener { snap, e ->
-                if (e != null) {
-                    Log.e("PUB_PROFILE", "follow state error", e)
-                    return@addSnapshotListener
+        followStateListener =
+            db.collection("users")
+                .document(myId)
+                .collection("following")
+                .document(viewedUserId)
+                .addSnapshotListener { snap, e ->
+                    if (e != null) {
+                        Log.e("PUB_PROFILE", "follow state error", e)
+                        return@addSnapshotListener
+                    }
+                    isFollowing = snap?.exists() == true
+                    binding.btnFollow.text =
+                        if (isFollowing) "Отписаться" else "Подписаться"
                 }
-                isFollowing = snap?.exists() == true
-                binding.btnFollow.text = if (isFollowing) "Отписаться" else "Подписаться"
-            }
     }
 
+    // Подписка / отписка
     private fun toggleFollow() {
         val myId = auth.currentUser?.uid ?: return
         if (myId == viewedUserId) return
 
         val now = System.currentTimeMillis()
 
-        val followingRef = db.collection("users")
-            .document(myId)
-            .collection("following")
-            .document(viewedUserId)
+        val followingRef =
+            db.collection("users")
+                .document(myId)
+                .collection("following")
+                .document(viewedUserId)
 
-        val followerRef = db.collection("users")
-            .document(viewedUserId)
-            .collection("followers")
-            .document(myId)
+        val followerRef =
+            db.collection("users")
+                .document(viewedUserId)
+                .collection("followers")
+                .document(myId)
 
         val batch = db.batch()
         if (isFollowing) {
@@ -231,7 +259,6 @@ class PublicUserProfileFragment : Fragment() {
         binding.btnFollow.isEnabled = false
         batch.commit()
             .addOnSuccessListener {
-                // состояние/текст обновит listener, но кнопку включаем сразу
                 binding.btnFollow.isEnabled = true
             }
             .addOnFailureListener { e ->
@@ -240,58 +267,68 @@ class PublicUserProfileFragment : Fragment() {
             }
     }
 
-    // ---------- PUBLIC PALETTES (REALTIME) ----------
-
+    // Публичные палитры
     private fun loadPublicPalettesRealtime() {
         palettesListener?.remove()
 
-        palettesListener = db.collection("color_palettes")
-            .whereEqualTo("userId", viewedUserId)
-            .whereEqualTo("isPublic", true)
-            .orderBy("creationDate", Query.Direction.DESCENDING)
-            .addSnapshotListener { snap, e ->
-                if (e != null || snap == null) {
-                    Log.e("PUB_PROFILE", "palettes error", e)
-                    palettes = emptyList()
-                    renderPalettes()
-                    updateLikesSumFromPalettes()
-                    return@addSnapshotListener
+        palettesListener =
+            db.collection("color_palettes")
+                .whereEqualTo("userId", viewedUserId)
+                .whereEqualTo("isPublic", true)
+                .orderBy("creationDate", Query.Direction.DESCENDING)
+                .addSnapshotListener { snap, e ->
+                    if (e != null || snap == null) {
+                        Log.e("PUB_PROFILE", "palettes error", e)
+                        palettes = emptyList()
+                        renderPalettes()
+                        updateLikesSumFromPalettes()
+                        return@addSnapshotListener
+                    }
+
+                    val raw =
+                        snap.documents.mapNotNull { doc ->
+                            val colors =
+                                (doc.get("colors") as? List<*>)
+                                    ?.map { it.toString() }
+                                    ?: emptyList()
+
+                            if (colors.isEmpty()) return@mapNotNull null
+
+                            val tags =
+                                (doc.get("tags") as? List<*>)
+                                    ?.map { it.toString() }
+                                    ?: emptyList()
+
+                            PublicFeedItem(
+                                id = doc.id,
+                                paletteName = doc.getString("paletteName") ?: "",
+                                colors = colors,
+                                authorId = viewedUserId,
+                                authorName = null,
+                                description = doc.getString("promptText"),
+                                tags = tags,
+                                likesCount = doc.getLong("likesCount") ?: 0L,
+                                dislikesCount = doc.getLong("dislikesCount") ?: 0L,
+                                imageUri = doc.getString("imageUri"),
+                                currentUserVote = 0,
+                                createdAt = doc.getLong("creationDate") ?: 0L
+                            )
+                        }
+
+                    fillVotesForCurrentUser(raw) { withVotes ->
+                        palettes = withVotes
+                        renderPalettes()
+                        updateLikesSumFromPalettes()
+                    }
                 }
-
-                val raw = snap.documents.mapNotNull { doc ->
-                    val colors = (doc.get("colors") as? List<*>)?.map { it.toString() } ?: emptyList()
-                    if (colors.isEmpty()) return@mapNotNull null
-
-                    val tags = (doc.get("tags") as? List<*>)?.map { it.toString() } ?: emptyList()
-
-                    PublicFeedItem(
-                        id = doc.id,
-                        paletteName = doc.getString("paletteName") ?: "",
-                        colors = colors,
-                        authorId = viewedUserId,
-                        authorName = null,
-                        description = doc.getString("promptText"),
-                        tags = tags,
-                        likesCount = doc.getLong("likesCount") ?: 0L,
-                        dislikesCount = doc.getLong("dislikesCount") ?: 0L,
-                        imageUri = doc.getString("imageUri"),
-                        currentUserVote = 0,
-                        createdAt = doc.getLong("creationDate") ?: 0L
-                    )
-                }
-
-                fillVotesForCurrentUser(raw) { withVotes ->
-                    palettes = withVotes
-                    renderPalettes()
-                    updateLikesSumFromPalettes()
-                }
-            }
     }
 
     private fun renderPalettes() {
         val empty = palettes.isEmpty()
-        binding.rvUserPalettes.visibility = if (empty) View.GONE else View.VISIBLE
-        binding.tvEmpty.visibility = if (empty) View.VISIBLE else View.GONE
+        binding.rvUserPalettes.visibility =
+            if (empty) View.GONE else View.VISIBLE
+        binding.tvEmpty.visibility =
+            if (empty) View.VISIBLE else View.GONE
         adapter.submitList(palettes)
     }
 
@@ -304,11 +341,14 @@ class PublicUserProfileFragment : Fragment() {
         }
 
         val tasks = items.map { item ->
-            db.collection("color_palettes").document(item.id)
-                .collection("votes").document(uid)
+            db.collection("color_palettes")
+                .document(item.id)
+                .collection("votes")
+                .document(uid)
                 .get()
                 .continueWith { t ->
-                    val vote = t.result?.getLong("value")?.toInt() ?: 0
+                    val vote =
+                        t.result?.getLong("value")?.toInt() ?: 0
                     item.copy(currentUserVote = vote)
                 }
         }
@@ -318,49 +358,89 @@ class PublicUserProfileFragment : Fragment() {
             .addOnFailureListener { onDone(items) }
     }
 
-    // ---------- VOTE + NOTIFICATIONS ----------
-
+    // Лайк / дизлайк
     private fun handleVote(item: PublicFeedItem, isLike: Boolean) {
         val me = auth.currentUser ?: return
         val myUid = me.uid
 
-        val paletteRef = db.collection("color_palettes").document(item.id)
-        val voteRef = paletteRef.collection("votes").document(myUid)
+        val paletteRef =
+            db.collection("color_palettes").document(item.id)
+        val voteRef =
+            paletteRef.collection("votes").document(myUid)
 
         db.runTransaction { tx ->
             val paletteSnap = tx.get(paletteRef)
             val ownerId = paletteSnap.getString("userId").orEmpty()
 
-            val likes = paletteSnap.getLong("likesCount") ?: 0L
-            val dislikes = paletteSnap.getLong("dislikesCount") ?: 0L
+            val likes =
+                paletteSnap.getLong("likesCount") ?: 0L
+            val dislikes =
+                paletteSnap.getLong("dislikesCount") ?: 0L
 
-            val prevVote = tx.get(voteRef).getLong("value")?.toInt() ?: 0
+            val prevVote =
+                tx.get(voteRef).getLong("value")?.toInt() ?: 0
             val target = if (isLike) 1 else -1
 
-            val (newLikes, newDislikes, newVote) = when (prevVote) {
-                target -> if (target == 1) Triple(likes - 1, dislikes, 0) else Triple(likes, dislikes - 1, 0)
-                1, -1 -> if (target == 1) Triple(likes + 1, dislikes - 1, 1) else Triple(likes - 1, dislikes + 1, -1)
-                else -> if (target == 1) Triple(likes + 1, dislikes, 1) else Triple(likes, dislikes + 1, -1)
-            }
+            val (newLikes, newDislikes, newVote) =
+                when (prevVote) {
+                    target ->
+                        if (target == 1)
+                            Triple(likes - 1, dislikes, 0)
+                        else
+                            Triple(likes, dislikes - 1, 0)
+                    1, -1 ->
+                        if (target == 1)
+                            Triple(likes + 1, dislikes - 1, 1)
+                        else
+                            Triple(likes - 1, dislikes + 1, -1)
+                    else ->
+                        if (target == 1)
+                            Triple(likes + 1, dislikes, 1)
+                        else
+                            Triple(likes, dislikes + 1, -1)
+                }
 
-            tx.update(paletteRef, mapOf("likesCount" to newLikes, "dislikesCount" to newDislikes))
-            if (newVote == 0) tx.delete(voteRef) else tx.set(voteRef, mapOf("value" to newVote))
+            tx.update(
+                paletteRef,
+                mapOf(
+                    "likesCount" to newLikes,
+                    "dislikesCount" to newDislikes
+                )
+            )
+
+            if (newVote == 0)
+                tx.delete(voteRef)
+            else
+                tx.set(voteRef, mapOf("value" to newVote))
 
             VoteResult(newLikes, newDislikes, newVote, ownerId)
         }.addOnSuccessListener { result ->
-            palettes = palettes.map { old ->
-                if (old.id == item.id) old.copy(
-                    likesCount = result.likes,
-                    dislikesCount = result.dislikes,
-                    currentUserVote = result.userVote
-                ) else old
-            }
+            palettes =
+                palettes.map { old ->
+                    if (old.id == item.id)
+                        old.copy(
+                            likesCount = result.likes,
+                            dislikesCount = result.dislikes,
+                            currentUserVote = result.userVote
+                        )
+                    else old
+                }
+
             renderPalettes()
             updateLikesSumFromPalettes()
 
-            if (result.userVote != 0 && result.ownerId.isNotBlank() && result.ownerId != myUid) {
+            if (
+                result.userVote != 0 &&
+                result.ownerId.isNotBlank() &&
+                result.ownerId != myUid
+            ) {
                 getMyUsername { myName ->
-                    val type = if (result.userVote == 1) "LIKE" else "DISLIKE"
+                    val type =
+                        if (result.userVote == 1)
+                            "LIKE"
+                        else
+                            "DISLIKE"
+
                     createNotification(
                         ownerId = result.ownerId,
                         fromUserId = myUid,
@@ -377,13 +457,24 @@ class PublicUserProfileFragment : Fragment() {
     }
 
     private fun getMyUsername(cb: (String) -> Unit) {
-        val uid = auth.currentUser?.uid ?: run { cb("Пользователь"); return }
-        db.collection("public_users").document(uid).get()
+        val uid = auth.currentUser?.uid ?: run {
+            cb("Пользователь"); return
+        }
+
+        db.collection("public_users")
+            .document(uid)
+            .get()
             .addOnSuccessListener { doc ->
-                val u = doc.getString("username")?.trim().orEmpty()
+                val u =
+                    doc.getString("username")
+                        ?.trim()
+                        .orEmpty()
+
                 cb(if (u.isNotBlank()) u else "Пользователь")
             }
-            .addOnFailureListener { cb("Пользователь") }
+            .addOnFailureListener {
+                cb("Пользователь")
+            }
     }
 
     private fun createNotification(
@@ -394,9 +485,16 @@ class PublicUserProfileFragment : Fragment() {
         paletteName: String,
         type: String
     ) {
-        val title = if (type == "LIKE") "Новый лайк" else "Новый дизлайк"
+        val title =
+            if (type == "LIKE") "Новый лайк" else "Новый дизлайк"
+
         val message =
-            "$fromUsername ${if (type == "LIKE") "поставил(а) лайк" else "поставил(а) дизлайк"} вашей палитре: $paletteName"
+            "$fromUsername ${
+                if (type == "LIKE")
+                    "поставил(а) лайк"
+                else
+                    "поставил(а) дизлайк"
+            } вашей палитре: $paletteName"
 
         val data = hashMapOf(
             "type" to type,
@@ -413,7 +511,9 @@ class PublicUserProfileFragment : Fragment() {
             .document(ownerId)
             .collection("notifications")
             .add(data)
-            .addOnFailureListener { e -> Log.e("NOTIFS", "Notification error", e) }
+            .addOnFailureListener { e ->
+                Log.e("NOTIFS", "Notification error", e)
+            }
     }
 
     private data class VoteResult(

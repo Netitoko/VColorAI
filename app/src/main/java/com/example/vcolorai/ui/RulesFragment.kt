@@ -40,6 +40,10 @@ class RulesFragment : BaseFragment() {
         loadRulesFromFirestore()
     }
 
+    // -------------------------------------------------------------------------
+    // АДАПТАЦИЯ ПОД СИСТЕМНЫЕ ОТСТУПЫ
+    // -------------------------------------------------------------------------
+
     override fun applyInsets(root: View) {
         val b = binding ?: return
         val initialRootTop = b.rulesRoot.paddingTop
@@ -56,6 +60,10 @@ class RulesFragment : BaseFragment() {
             insets
         }
     }
+
+    // -------------------------------------------------------------------------
+    // ЗАГРУЗКА ПРАВИЛ ПУБЛИКАЦИЙ ИЗ FIRESTORE
+    // -------------------------------------------------------------------------
 
     private fun loadRulesFromFirestore() {
         val b = binding ?: return
@@ -75,7 +83,6 @@ class RulesFragment : BaseFragment() {
                     return@addOnSuccessListener
                 }
 
-                // важно: название поля должно совпадать
                 val markdown = doc.getString("markdown")
 
                 if (markdown.isNullOrBlank()) {

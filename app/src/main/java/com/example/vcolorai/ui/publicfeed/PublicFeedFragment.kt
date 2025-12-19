@@ -1,5 +1,6 @@
 package com.example.vcolorai.ui.publicfeed
 
+import com.example.vcolorai.ui.common.VoteManager
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
@@ -42,26 +43,27 @@ class PublicFeedFragment : BaseFragment() {
 
     private lateinit var adapter: PublicFeedAdapter
 
-    /** “сырой” список ленты (после загрузки и заполнения голосов) */
+    // Список всех загруженных палитр для фильтрации
     private var fullList: List<PublicFeedItem> = emptyList()
 
-    /** cache uid -> username (из public_users) */
+    // Кэш соответствия ID пользователя и его имени
     private val authorUsernameCache = mutableMapOf<String, String>()
 
-    // -------- @mention bottom sheet debounce --------
+    // Обработчики для отложенного поиска упоминаний
     private val uiHandler = Handler(Looper.getMainLooper())
     private var mentionRunnable: Runnable? = null
     private var lastMentionKey: String? = null
     private var lastShownUserId: String? = null
 
-    // -------- Sort / Filters --------
+    // Режимы сортировки ленты
     private enum class SortMode {
         DATE_NEW, DATE_OLD,
         LIKES_DESC,
-        SCORE_DESC,      // likes - dislikes
+        SCORE_DESC,
         DISLIKES_DESC
     }
 
+    // Параметры фильтрации контента
     private data class FeedFilters(
         var onlyWithImage: Boolean = false,
         var onlyText: Boolean = false,
@@ -72,17 +74,17 @@ class PublicFeedFragment : BaseFragment() {
     private var sortMode: SortMode = SortMode.DATE_NEW
     private var filters = FeedFilters()
 
-    // ✅ фильтр по тегу отдельно
+    // Фильтр по конкретному тегу
     private var tagQueryFilter: String = ""
 
-    // ---------------- Offline cache ----------------
+    // Кэширование данных для оффлайн-режима
     private val gson = Gson()
     private val prefs by lazy {
         requireContext().getSharedPreferences("feed_cache", Context.MODE_PRIVATE)
     }
     private val FEED_CACHE_KEY = "public_feed_v1"
 
-    // ---------------- Network callback ----------------
+    // Мониторинг состояния сети
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var lastInternetState: Boolean? = null
 
@@ -100,7 +102,7 @@ class PublicFeedFragment : BaseFragment() {
         setupSearch()
         setupFilterMenu()
 
-        // стартовая загрузка: если оффлайн — покажем кэш
+        // Инициализация данных с учетом сетевого соединения
         val online = hasInternet()
         showOfflineBanner(!online)
         if (online) loadPublicPalettes() else loadFromCacheOrEmpty()
@@ -118,8 +120,7 @@ class PublicFeedFragment : BaseFragment() {
         unregisterNetwork()
     }
 
-    // ---------------- Recycler ----------------
-
+    // Настройка RecyclerView для отображения ленты
     private fun setupRecycler() {
         adapter = PublicFeedAdapter(
             items = emptyList(),
@@ -140,8 +141,7 @@ class PublicFeedFragment : BaseFragment() {
         binding.rvFeed.adapter = adapter
     }
 
-    // ---------------- Search (+ @mention) ----------------
-
+    // Настройка поиска с обработкой упоминаний через @
     private fun setupSearch() {
         binding.etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
@@ -155,6 +155,7 @@ class PublicFeedFragment : BaseFragment() {
         })
     }
 
+    // Обработка ввода @ для поиска пользователей
     private fun handleAtMention(raw: String) {
         val t = raw.trim()
         if (!t.startsWith("@") || t.length < 2) {
@@ -177,9 +178,7 @@ class PublicFeedFragment : BaseFragment() {
         }
     }
 
-    /**
-     * usernames/{usernameKey} -> { uid }
-     */
+    // Поиск пользователя по имени и открытие его профиля
     private fun resolveMentionAndShow(usernameKey: String) {
         db.collection("usernames").document(usernameKey)
             .get()
@@ -199,17 +198,17 @@ class PublicFeedFragment : BaseFragment() {
             }
     }
 
-    // ---------------- Filter / Sort menu (⋮) ----------------
-
+    // Настройка кнопки фильтров и сортировки
     private fun setupFilterMenu() {
         binding.btnFilter.setOnClickListener { showFilterSortMenu() }
     }
 
+    // Отображение меню с опциями сортировки и фильтрации
     private fun showFilterSortMenu() {
         val popup = PopupMenu(requireContext(), binding.btnFilter)
         val menu = popup.menu
 
-        // ---- Sort ----
+        // Опции сортировки
         menu.add("Сортировка: новые").setOnMenuItemClickListener {
             sortMode = SortMode.DATE_NEW
             applyFilters()
@@ -238,7 +237,7 @@ class PublicFeedFragment : BaseFragment() {
 
         menu.add("—")
 
-        // ---- Filters ----
+        // Опции фильтрации
         menu.add(toggleTitle(filters.onlyWithImage, "Только с фото")).setOnMenuItemClickListener {
             filters.onlyWithImage = !filters.onlyWithImage
             if (filters.onlyWithImage) filters.onlyText = false
@@ -283,10 +282,12 @@ class PublicFeedFragment : BaseFragment() {
         popup.show()
     }
 
+    // Форматирование названия пункта меню с галочкой
     private fun toggleTitle(enabled: Boolean, title: String): String {
         return if (enabled) "✓ $title" else title
     }
 
+    // Диалог для ввода тега фильтрации
     private fun showTagQueryDialog() {
         val input = EditText(requireContext()).apply {
             hint = "например: pastel"
@@ -308,8 +309,7 @@ class PublicFeedFragment : BaseFragment() {
             .show()
     }
 
-    // ---------------- Load feed ----------------
-
+    // Загрузка публичных палитр из Firestore
     private fun loadPublicPalettes() {
         db.collection("color_palettes")
             .whereEqualTo("isPublic", true)
@@ -341,14 +341,13 @@ class PublicFeedFragment : BaseFragment() {
 
                 fillVotesForCurrentUser(raw) { withVotes ->
                     fullList = withVotes
-                    saveFeedCache(fullList)      // ✅ кэшируем успешную загрузку
+                    saveFeedCache(fullList)
                     applyFilters()
                 }
             }
             .addOnFailureListener { e ->
                 Log.e("FEED", "load feed error", e)
 
-                // ✅ если не загрузилось — показываем кэш
                 if (!hasInternet()) {
                     showOfflineBanner(true)
                     loadFromCacheOrEmpty()
@@ -358,6 +357,7 @@ class PublicFeedFragment : BaseFragment() {
             }
     }
 
+    // Предзагрузка имен авторов для отображения в ленте
     private fun preloadAuthorUsernames(items: List<PublicFeedItem>) {
         val ids = items.map { it.authorId.trim() }
             .filter { it.isNotBlank() }
@@ -386,8 +386,7 @@ class PublicFeedFragment : BaseFragment() {
         }
     }
 
-    // ---------------- Offline cache helpers ----------------
-
+    // Сохранение ленты в локальное хранилище
     private fun saveFeedCache(list: List<PublicFeedItem>) {
         try {
             val json = gson.toJson(list)
@@ -397,6 +396,7 @@ class PublicFeedFragment : BaseFragment() {
         }
     }
 
+    // Загрузка ленты из локального хранилища
     private fun loadFeedCache(): List<PublicFeedItem> {
         val json = prefs.getString(FEED_CACHE_KEY, null) ?: return emptyList()
         return try {
@@ -408,6 +408,7 @@ class PublicFeedFragment : BaseFragment() {
         }
     }
 
+    // Загрузка данных из кэша при отсутствии сети
     private fun loadFromCacheOrEmpty() {
         val cached = loadFeedCache()
         if (cached.isEmpty()) {
@@ -420,15 +421,14 @@ class PublicFeedFragment : BaseFragment() {
         }
     }
 
-    // ---------------- Filtering & sorting ----------------
-
+    // Применение фильтров и сортировки к данным
     private fun applyFilters() {
         val queryRaw = binding.etSearch.text?.toString().orEmpty().trim()
         val query = queryRaw.lowercase()
 
         var list = fullList
 
-        // --- text search: name/desc/tags/author username ---
+        // Поиск по тексту
         if (query.isNotEmpty()) {
             list = list.filter { item ->
                 val nameHit = item.paletteName.lowercase().contains(query)
@@ -445,7 +445,7 @@ class PublicFeedFragment : BaseFragment() {
             }
         }
 
-        // --- filters: image/text ---
+        // Фильтры по типу контента
         if (filters.onlyWithImage) {
             list = list.filter { !it.imageUri.isNullOrBlank() }
         }
@@ -453,7 +453,7 @@ class PublicFeedFragment : BaseFragment() {
             list = list.filter { it.imageUri.isNullOrBlank() }
         }
 
-        // --- filters: tags ---
+        // Фильтры по тегам
         if (filters.onlyWithTags) {
             list = list.filter { it.tags.isNotEmpty() }
         }
@@ -461,7 +461,7 @@ class PublicFeedFragment : BaseFragment() {
             list = list.filter { it.tags.isEmpty() }
         }
 
-        // --- filter: tag contains ---
+        // Фильтр по конкретному тегу
         val tagQ = tagQueryFilter.trim().lowercase()
         if (tagQ.isNotEmpty()) {
             list = list.filter { item ->
@@ -469,7 +469,7 @@ class PublicFeedFragment : BaseFragment() {
             }
         }
 
-        // --- sorting ---
+        // Применение сортировки
         list = when (sortMode) {
             SortMode.DATE_NEW -> list.sortedByDescending { it.createdAt }
             SortMode.DATE_OLD -> list.sortedBy { it.createdAt }
@@ -481,8 +481,7 @@ class PublicFeedFragment : BaseFragment() {
         adapter.submitList(list)
     }
 
-    // ---------------- Votes (likes/dislikes + liked_palettes) ----------------
-
+    // Заполнение информации о голосах текущего пользователя
     private fun fillVotesForCurrentUser(
         items: List<PublicFeedItem>,
         onDone: (List<PublicFeedItem>) -> Unit
@@ -506,13 +505,7 @@ class PublicFeedFragment : BaseFragment() {
             .addOnFailureListener { onDone(items) }
     }
 
-    private data class VoteResult(
-        val likes: Long,
-        val dislikes: Long,
-        val userVote: Int,
-        val ownerId: String
-    )
-
+    // Обработка лайков и дизлайков
     private fun handleVote(item: PublicFeedItem, isLike: Boolean) {
         val user = auth.currentUser ?: run {
             Toast.makeText(requireContext(), "Войдите, чтобы голосовать", Toast.LENGTH_SHORT).show()
@@ -522,57 +515,41 @@ class PublicFeedFragment : BaseFragment() {
         val uid = user.uid
         val now = System.currentTimeMillis()
 
-        val paletteRef = db.collection("color_palettes").document(item.id)
-        val voteRef = paletteRef.collection("votes").document(uid)
-
         val likedRef = db.collection("users")
             .document(uid)
             .collection("liked_palettes")
             .document(item.id)
 
-        db.runTransaction { tx ->
-            val paletteSnap = tx.get(paletteRef)
-            val ownerId = paletteSnap.getString("userId").orEmpty()
+        VoteManager.vote(
+            db = db,
+            auth = auth,
+            paletteId = item.id,
+            paletteName = item.paletteName,
+            isLike = isLike,
+            onSuccess = { res ->
+                fullList = fullList.map {
+                    if (it.id == item.id) it.copy(
+                        likesCount = res.likes,
+                        dislikesCount = res.dislikes,
+                        currentUserVote = res.userVote
+                    ) else it
+                }
+                applyFilters()
 
-            val likes = paletteSnap.getLong("likesCount") ?: 0L
-            val dislikes = paletteSnap.getLong("dislikesCount") ?: 0L
-
-            val prevVote = tx.get(voteRef).getLong("value")?.toInt() ?: 0
-            val target = if (isLike) 1 else -1
-
-            val (newLikes, newDislikes, newVote) = when (prevVote) {
-                target -> if (target == 1) Triple(likes - 1, dislikes, 0) else Triple(likes, dislikes - 1, 0)
-                1, -1 -> if (target == 1) Triple(likes + 1, dislikes - 1, 1) else Triple(likes - 1, dislikes + 1, -1)
-                else -> if (target == 1) Triple(likes + 1, dislikes, 1) else Triple(likes, dislikes + 1, -1)
+                if (res.userVote == 1) {
+                    likedRef.set(mapOf("createdAt" to now))
+                } else {
+                    likedRef.delete()
+                }
+            },
+            onError = { e ->
+                Log.e("FEED", "vote error", e)
+                Toast.makeText(requireContext(), "Ошибка: ${e.message}", Toast.LENGTH_SHORT).show()
             }
-
-            tx.update(paletteRef, mapOf("likesCount" to newLikes, "dislikesCount" to newDislikes))
-            if (newVote == 0) tx.delete(voteRef) else tx.set(voteRef, mapOf("value" to newVote))
-
-            // liked_palettes index: только если лайк
-            if (newVote == 1) tx.set(likedRef, mapOf("createdAt" to now)) else tx.delete(likedRef)
-
-            VoteResult(newLikes, newDislikes, newVote, ownerId)
-        }.addOnSuccessListener { res ->
-            fullList = fullList.map { old ->
-                if (old.id == item.id) old.copy(
-                    likesCount = res.likes,
-                    dislikesCount = res.dislikes,
-                    currentUserVote = res.userVote
-                ) else old
-            }
-            applyFilters()
-
-            // ✅ кэш обновляем после голоса тоже (чтобы оффлайн увидел актуальные цифры)
-            saveFeedCache(fullList)
-        }.addOnFailureListener { e ->
-            Log.e("FEED", "vote error", e)
-            Toast.makeText(requireContext(), "Ошибка: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
+        )
     }
 
-    // ---------------- Save & Share ----------------
-
+    // Сохранение палитры в коллекцию пользователя
     private fun saveToMyPalettes(item: PublicFeedItem) {
         val uid = auth.currentUser?.uid ?: run {
             Toast.makeText(requireContext(), "Войдите, чтобы сохранять", Toast.LENGTH_SHORT).show()
@@ -604,6 +581,7 @@ class PublicFeedFragment : BaseFragment() {
             }
     }
 
+    // Поделиться палитрой через другие приложения
     private fun sharePalette(item: PublicFeedItem) {
         val text = buildString {
             appendLine(item.paletteName.ifBlank { "Палитра" })
@@ -622,17 +600,15 @@ class PublicFeedFragment : BaseFragment() {
         startActivity(Intent.createChooser(intent, "Поделиться палитрой"))
     }
 
-    // ---------------- Offline banner + Network ----------------
-
+    // Отображение/скрытие баннера оффлайн-режима
     private fun showOfflineBanner(show: Boolean) {
-        // В layout должен быть offlineBanner (например TextView/MaterialCardView)
         try {
             binding.offlineBanner.visibility = if (show) View.VISIBLE else View.GONE
         } catch (_: Exception) {
-            // если ты ещё не добавила offlineBanner в xml — просто игнорируем
         }
     }
 
+    // Проверка наличия интернет-соединения
     private fun hasInternet(): Boolean {
         return try {
             val cm = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -646,6 +622,7 @@ class PublicFeedFragment : BaseFragment() {
         }
     }
 
+    // Мониторинг изменений состояния сети
     private fun observeNetwork() {
         val cm = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
@@ -680,6 +657,7 @@ class PublicFeedFragment : BaseFragment() {
         }
     }
 
+    // Отмена регистрации сетевого коллбэка
     private fun unregisterNetwork() {
         val cm = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val cb = networkCallback ?: return
