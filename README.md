@@ -227,8 +227,78 @@ VColorAI — мобильное приложение на Android, которо�
 
 **Схема базы данных**
 Cхема связей основных моделей (ER‑диаграмма):
-<img width="1219" height="1216" alt="image" src="https://github.com/user-attachments/assets/e7c88f27-e253-48c3-b177-f00d194594f8" />
+```mermaid
+erDiagram
 
+  USERS {
+    string uid PK
+    string email
+    string other_private_fields
+  }
+
+  PUBLIC_USERS {
+    string uid PK
+    string username
+    string avatar
+    string bio
+    string stats_map
+  }
+
+  USERNAMES {
+    string usernameKey PK
+    string uid FK
+    number createdAt
+  }
+
+  COLOR_PALETTES {
+    string paletteId PK
+    string userId FK
+    string paletteName
+    string[] colors
+    string sourceType
+    string promptText
+    string imageUri
+    number creationDate
+    boolean isPublic
+    string[] tags
+    number likesCount
+    number dislikesCount
+  }
+
+  VOTES {
+    string paletteId FK
+    string userId FK
+    number value
+  }
+
+  LIKED_PALETTES {
+    string userId FK
+    string paletteId FK
+    number createdAt
+  }
+
+  NOTIFICATIONS {
+    string notifId PK
+    string toUserId FK
+    string fromUserId FK
+    string type
+    string title
+    string message
+    number createdAt
+    boolean isRead
+  }
+
+  %% Relationships (логические связи)
+  USERS ||--|| PUBLIC_USERS : "same uid"
+  PUBLIC_USERS ||--o{ USERNAMES : "owns usernameKey"
+  USERS ||--o{ COLOR_PALETTES : "creates"
+  COLOR_PALETTES ||--o{ VOTES : "has votes"
+  USERS ||--o{ VOTES : "casts"
+  USERS ||--o{ LIKED_PALETTES : "likes"
+  COLOR_PALETTES ||--o{ LIKED_PALETTES : "liked by"
+  USERS ||--o{ NOTIFICATIONS : "receives"
+  USERS ||--o{ NOTIFICATIONS : "sends (fromUserId)"
+```
 
 **Сборка и запуск (Android)**
 **Требования**
