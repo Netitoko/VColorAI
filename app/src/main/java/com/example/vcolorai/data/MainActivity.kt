@@ -6,7 +6,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.example.vcolorai.databinding.ActivityMainBinding
-import com.example.vcolorai.ui.generation.GenerationFragment
+import com.example.vcolorai.GenerationFragment
 import com.example.vcolorai.R
 import com.example.vcolorai.ui.profile.ProfileFragment
 import com.example.vcolorai.ui.bot.IdeasBotFragment
